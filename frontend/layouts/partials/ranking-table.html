@@ -1,0 +1,64 @@
+{{- /* .window = "all" | "since"; people from data/people.json */ -}}
+{{- $w := .window }}
+<div class="tablewrap">
+<table class="rank sortable" id="rank-{{ $w }}">
+<thead>
+<tr>
+  <th class="pin">#</th>
+  <th class="l" data-type="text" aria-sort="none">Name</th>
+  {{- if eq $w "all" }}
+  <th data-title="Citations on the Google Scholar profile">Claimed</th>
+  <th data-title="Citations of papers that name the person as an author">Counted</th>
+  <th data-title="Counted / claimed">Share</th>
+  <th data-title="Citations of papers whose author list does not name the person">Not listed</th>
+  <th data-title="Citations of papers that could not be checked (cut author list)">Unconfirmed</th>
+  <th data-title="h-index of the counted papers (Scholar's own in brackets on the person page)">h</th>
+  <th data-title="Counted papers">Papers</th>
+  {{- else }}
+  <th data-title="Citations received since {{ .from }} according to the Scholar profile (all papers)">Claimed since {{ .from }}</th>
+  <th data-title="Citations of counted papers published since {{ .from }}">Counted, papers since {{ .from }}</th>
+  <th data-title="Counted papers published since {{ .from }}">Papers</th>
+  <th data-title="h-index of counted papers published since {{ .from }}">h</th>
+  {{- end }}
+  <th data-title="Journal papers in a Q1 SCImago quartile">Q1 journal</th>
+  <th data-title="Journal papers, Q2 to Q4">Q2–Q4</th>
+  <th data-title="CORE rank A*">A*</th>
+  <th data-title="CORE rank A">A</th>
+  <th data-title="CORE rank B">B</th>
+  <th data-title="CORE rank C">C</th>
+  <th data-title="Conference papers not in the CORE list">Unranked conf.</th>
+</tr>
+</thead>
+<tbody>
+{{- range $i, $p := .people }}
+{{- $v := cond (eq $w "all") $p.venues $p.venues_since }}
+<tr>
+  <td class="pin rk"></td>
+  <td class="l" data-v="{{ $p.name }}"><a href="{{ printf "people/%s/" $p.slug | relURL }}">{{ $p.name }}</a>{{ with $p.name_ja }} <span class="ja">{{ . }}</span>{{ end }}</td>
+  {{- if eq $w "all" }}
+  {{ if $p.has_claim }}<td data-v="{{ $p.claimed.citations }}">{{ lang.FormatNumber 0 $p.claimed.citations }}</td>{{ else }}<td data-last="1" data-v="-1" class="muted" title="No Google Scholar profile: papers from {{ $p.source }}">–</td>{{ end }}
+  <td data-v="{{ $p.counted.citations }}"><strong>{{ lang.FormatNumber 0 $p.counted.citations }}</strong></td>
+  {{- with $p.ratio }}<td data-v="{{ . }}">{{ mul . 100 | lang.FormatNumber 1 }}%</td>{{ else }}<td data-last="1" data-v="-1" class="muted">–</td>{{ end }}
+  <td data-v="{{ $p.removed.citations }}">{{ if $p.removed.citations }}{{ lang.FormatNumber 0 $p.removed.citations }} <span class="muted">({{ $p.removed.papers }})</span>{{ else }}0{{ end }}</td>
+  <td data-v="{{ $p.unconfirmed.citations }}">{{ if $p.unconfirmed.papers }}{{ lang.FormatNumber 0 $p.unconfirmed.citations }} <span class="muted">({{ $p.unconfirmed.papers }})</span>{{ else }}0{{ end }}</td>
+  <td data-v="{{ $p.counted.h }}">{{ $p.counted.h }}</td>
+  <td data-v="{{ $p.counted.papers }}">{{ $p.counted.papers }}</td>
+  {{- else }}
+  {{ if $p.has_claim }}<td data-v="{{ $p.claimed.since }}">{{ lang.FormatNumber 0 $p.claimed.since }}</td>{{ else }}<td data-last="1" data-v="-1" class="muted">–</td>{{ end }}
+  <td data-v="{{ $p.since_window.citations }}"><strong>{{ lang.FormatNumber 0 $p.since_window.citations }}</strong></td>
+  <td data-v="{{ $p.since_window.papers }}">{{ $p.since_window.papers }}</td>
+  <td data-v="{{ $p.since_window.h }}">{{ $p.since_window.h }}</td>
+  {{- end }}
+  <td data-v="{{ $v.journal_q1 }}">{{ $v.journal_q1 }}</td>
+  {{- $q := add (add $v.journal_q2 $v.journal_q3) $v.journal_q4 }}
+  <td data-v="{{ $q }}">{{ $q }}</td>
+  <td data-v="{{ $v.conf_astar }}">{{ $v.conf_astar }}</td>
+  <td data-v="{{ $v.conf_a }}">{{ $v.conf_a }}</td>
+  <td data-v="{{ $v.conf_b }}">{{ $v.conf_b }}</td>
+  <td data-v="{{ $v.conf_c }}">{{ $v.conf_c }}</td>
+  <td data-v="{{ $v.conf_unranked }}">{{ $v.conf_unranked }}</td>
+</tr>
+{{- end }}
+</tbody>
+</table>
+</div>

@@ -1,0 +1,7 @@
+backend/raw/
+backend/work/
+backend/__pycache__/
+frontend/public/
+frontend/resources/
+frontend/.hugo_build.lock
+*.pyc

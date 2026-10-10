@@ -1,0 +1,51 @@
+{{ define "main" -}}
+{{- $o := hugo.Data.overview }}
+<h1>About</h1>
+<h2>What is counted</h2>
+<p>Each person's Google Scholar profile lists papers with a citation count. A profile can also hold papers that
+others wrote (added by hand, or merged into one's own entries). This site recounts the profile paper by paper and counts
+only those that name the person as an author.</p>
+<ol>
+  <li><strong>Verified</strong>: an independent record in <a href="https://openalex.org">OpenAlex</a> (matched by exact title, year within one)
+  lists the person as an author, by author ID confirmed in <code>roster.csv</code> or by name.</li>
+  <li><strong>Named in Scholar's list</strong>: no independent record was found, but the author list that Scholar prints for the paper names the person.</li>
+  <li><strong>Unconfirmed</strong>: the author list is cut ("...") and does not show the person, and there is no independent record. Shown, not counted.</li>
+  <li><strong>Author list does not name the person</strong>: the OpenAlex record, or Scholar's complete author list, has other names only. Shown, not counted.</li>
+  <li><strong>Outside the period at NICT</strong>: for a person who has left, only papers published within the years set in
+  <code>roster.csv</code> (<code>period_from</code>, <code>period_to</code>) are counted. Shown, not counted.</li>
+  <li><strong>Confirmed by the maintainer</strong>: a row in <code>paper_overrides.csv</code> overrides the rule, with a note.</li>
+</ol>
+<p><strong>Counted citations</strong> are those of verified, named and maintainer-confirmed papers. <strong>Share</strong> is counted divided by
+the total on the profile. The h-index and i10-index are recomputed from the counted papers only.
+This is a statement about author lists, not about intent: a paper can be missing from a person's author list for ordinary
+reasons (a different spelling of the name, a database that has not caught up), so every excluded paper is listed with its reason on the person's page.</p>
+<p>Not applied: self-citations and citations from co-authors are <em>not</em> removed. Only whether the paper is the person's own is checked.</p>
+
+<h2>Journals and conferences</h2>
+<ul>
+  <li><strong>Journals</strong>: the SCImago Journal Rank table (best quartile: Q1 if the journal is Q1 in any of its categories), matched by ISSN where
+  OpenAlex gives one, else by exact title. A journal not in the table is shown as "not in SCImago", not as a lower quartile.</li>
+  <li><strong>Conferences</strong>: the CORE conference ranking (ICORE2026, then CORE2023 and CORE2021 for conferences no longer listed),
+  matched by full name, or by acronym plus most of the name's words. A conference that is not found is "unranked"; CORE's
+  Australasian and national ranks are counted as unranked here. The latest list is applied to all years.</li>
+  <li>Preprints, patents, books, theses and venues that could not be classified are counted in their own columns.
+  Hand fixes go in <code>venue_overrides.csv</code>.</li>
+</ul>
+
+<h2>Last five years ({{ $o.from_year }} on)</h2>
+<p>Scholar's "since {{ $o.from_year }}" figure counts citations <em>received</em> since {{ $o.from_year }} by all of a person's papers.
+The counted figures for this window are for papers <em>published</em> since {{ $o.from_year }}, because Scholar does not give
+a per-paper history. Both are shown and are not the same quantity. Per-year bars on the Analysis and person pages
+come from the profile's own "cited by" chart.</p>
+
+<h2>Monthly figures</h2>
+<p>The first points are from the screening workbook ("Total citation", 2026/06 and 2026/07). Every later snapshot of this site adds one point per person.</p>
+
+<h2>Sources and limits</h2>
+<ul>
+  <li>Google Scholar profile pages (a manual snapshot; Scholar blocks automated search, so profile IDs are listed by hand).</li>
+  <li>Researchmap for people without a Scholar profile (papers and author lists), with citations from OpenAlex; such people have no claimed figure.</li>
+  <li>OpenAlex indexes fewer papers than Scholar (grey literature, theses, some conference papers): a missing record is not evidence either way, which is why papers whose Scholar author list names the person still count.</li>
+  <li>OpenAlex merges and splits Japanese names often; its author IDs are confirmed by hand.</li>
+</ul>
+{{- end }}

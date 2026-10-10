@@ -1,0 +1,37 @@
+{{ define "main" -}}
+{{- $o := hugo.Data.overview }}{{- $ch := hugo.Data.charts }}
+<h1>Analysis</h1>
+<p class="lede">What the counted citations and papers look like in aggregate, for all years and for the last five years ({{ $o.from_year }} on).</p>
+
+<h2>Claimed and counted citations</h2>
+{{ $ch.citations_legend | safeHTML }}
+<figure>{{ $ch.citations | safeHTML }}</figure>
+
+<h2>Citations received per year (all profiles)</h2>
+<figure>{{ $ch.years | safeHTML }}</figure>
+<p class="note">Sum of the "cited by" bars of the Scholar profiles. Strong bars: {{ $o.from_year }} onwards.
+Claimed citations since {{ $o.from_year }}: <strong>{{ lang.FormatNumber 0 $o.claimed_since }}</strong>; counted citations of papers published since {{ $o.from_year }}:
+<strong>{{ lang.FormatNumber 0 $o.counted_since }}</strong> in {{ $o.papers_since }} papers.</p>
+
+<h2>Journal papers by SCImago quartile</h2>
+<h3>All years</h3>
+{{ $ch.journals_legend | safeHTML }}
+<figure>{{ $ch.journals | safeHTML }}</figure>
+<h3>Since {{ $o.from_year }}</h3>
+<figure>{{ $ch.journals_since | safeHTML }}</figure>
+
+<h2>Conference papers by CORE rank</h2>
+<h3>All years</h3>
+{{ $ch.conferences_legend | safeHTML }}
+<figure>{{ $ch.conferences | safeHTML }}</figure>
+<h3>Since {{ $o.from_year }}</h3>
+<figure>{{ $ch.conferences_since | safeHTML }}</figure>
+
+<h2>Institute totals</h2>
+{{- $v := $o.venues }}{{- $s := $o.venues_since }}
+<table class="kv venues">
+<tr><th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Journal, not in SCImago</th><th>A*</th><th>A</th><th>B</th><th>C</th><th>Unranked conf.</th><th>Preprint</th><th>Patent</th><th>Other</th></tr>
+<tr><th class="l">All years</th><td>{{ $v.journal_q1 }}</td><td>{{ $v.journal_q2 }}</td><td>{{ $v.journal_q3 }}</td><td>{{ $v.journal_q4 }}</td><td>{{ $v.journal_other }}</td><td>{{ $v.conf_astar }}</td><td>{{ $v.conf_a }}</td><td>{{ $v.conf_b }}</td><td>{{ $v.conf_c }}</td><td>{{ $v.conf_unranked }}</td><td>{{ $v.preprint }}</td><td>{{ $v.patent }}</td><td>{{ $v.other }}</td></tr>
+<tr><th class="l">Since {{ $o.from_year }}</th><td>{{ $s.journal_q1 }}</td><td>{{ $s.journal_q2 }}</td><td>{{ $s.journal_q3 }}</td><td>{{ $s.journal_q4 }}</td><td>{{ $s.journal_other }}</td><td>{{ $s.conf_astar }}</td><td>{{ $s.conf_a }}</td><td>{{ $s.conf_b }}</td><td>{{ $s.conf_c }}</td><td>{{ $s.conf_unranked }}</td><td>{{ $s.preprint }}</td><td>{{ $s.patent }}</td><td>{{ $s.other }}</td></tr>
+</table>
+{{- end }}

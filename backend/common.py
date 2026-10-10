@@ -1,0 +1,216 @@
+"""Shared configuration and pure helpers for the citation-validation pipeline.
+
+Nothing in this file touches the network, so all of it can be unit-tested (see tests/).
+"""
+import csv
+import datetime
+import json
+import re
+import unicodedata
+from pathlib import Path
+
+BACKEND = Path(__file__).resolve().parent
+FRONTEND = BACKEND.parent / "frontend"
+RAW = BACKEND / "raw"  # downloaded source files, re-creatable
+WORK = BACKEND / "work"  # intermediate files, re-creatable
+
+ROSTER = BACKEND / "roster.csv"  # hand-kept: who is on the site
+SCHOLAR = BACKEND / "scholar.json"  # snapshot of each Scholar profile and its paper list (fetch_scholar.py)
+HISTORY = BACKEND / "history.csv"  # one row per profile and fetch: the monthly graph's own data
+XLSX_HISTORY = BACKEND / "xlsx_history.csv"  # monthly figures from the screening workbook (read_xlsx.py)
+OPENALEX = RAW / "openalex.json"  # works and title lookups from OpenAlex (fetch_openalex.py)
+VENUE_OVERRIDES = BACKEND / "venue_overrides.csv"  # hand-kept: venue string -> kind / quartile / CORE rank
+PAPER_OVERRIDES = BACKEND / "paper_overrides.csv"  # hand-kept: a paper's `decision` (yes/no) with a note
+
+FROM_YEAR = 2021  # "the last five years" analysis starts here
+TODAY = datetime.date.today()
+CORE_RANKS = ["A*", "A", "B", "C", "Unranked"]
+
+
+# ---------------------------------------------------------------- text
+
+def fold(s):
+    """Lower case, no diacritics, no punctuation: the form used to compare names and titles."""
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(c for c in s if not unicodedata.combining(c)).lower()
+    return re.sub(r"[^a-z0-9぀-ヿ一-鿿]+", " ", s).strip()
+
+
+def norm_title(t):
+    return fold(t)
+
+
+def title_key(t):
+    """Title with all spaces removed: robust to hyphenation and spacing differences."""
+    return fold(t).replace(" ", "")
+
+
+def split_initials(token):
+    """'MN' -> ['m', 'n']; 'Michiharu' -> ['michiharu']."""
+    if token.isupper() and 1 < len(token) <= 3 and token.isalpha():
+        return [c.lower() for c in token]
+    return [fold(token)]
+
+
+def name_tokens(*names):
+    out = set()
+    for n in names:
+        out.update(t for t in fold(n).split() if t)
+    return out
+
+
+def _author_variants(author):
+    """Token lists for a printed name. A short all-caps token ('MN', 'LI') is read both as initials and as a word;
+    hyphenated parts ('Huan-Bang') become separate tokens."""
+    raw = re.sub(r"[.,]", " ", author or "").split()
+    variants = [[]]
+    for t in raw:
+        opts = [[x for x in fold(t).split() if x]]
+        if t.isupper() and 1 < len(t) <= 3 and t.isalpha():
+            opts.append([c.lower() for c in t])
+        variants = [v + o for v in variants for o in opts][:16]
+    return variants
+
+
+def author_matches(author, person_names):
+    """Does a printed author name ('M Nakamura', 'Nakamura, Michiharu', 'LI Huan-Bang') denote the person?
+
+    `person_names` are the person's name forms (roster name, aliases). A name matches when one of its full
+    tokens (the surname, in either order) appears in the author string and every other token of the author
+    string is a full token or an initial of one of the name's tokens (middle initials may repeat a token).
+    Initials alone never match.
+    """
+    compact = re.sub(r"[\s\u3000]+", "", author or "")
+    for name in person_names:  # names in Japanese script: spaces differ between lists ("李 還幇" / "李還幇")
+        if re.search(r"[\u3040-\u30ff\u4e00-\u9fff]", name) and re.sub(r"[\s\u3000]+", "", name) in compact:
+            return True
+    for a_tokens in _author_variants(author):
+        if len(a_tokens) < 2:
+            continue
+        for name in person_names:
+            n_tokens = [t for t in fold(name).split() if t]
+            if len(n_tokens) < 2:
+                continue
+            full = [t for t in a_tokens if len(t) > 1]
+            if full and all(t in n_tokens or (len(t) == 1 and any(t == x[0] for x in n_tokens)) for t in a_tokens) \
+                    and any(t in n_tokens for t in full):
+                return True
+    return False
+
+
+def authors_include(authors, person_names):
+    return any(author_matches(a, person_names) for a in authors)
+
+
+def split_authors(s):
+    return [a.strip() for a in (s or "").split(",") if a.strip()]
+
+
+# ---------------------------------------------------------------- venues
+
+def venue_core(venue):
+    """The venue name from a Scholar venue line ('IEEE Trans. X 22 (3), 1-15, 2021' -> 'IEEE Trans. X')."""
+    v = re.sub(r"\s+", " ", (venue or "").replace("\xa0", " ")).strip()
+    v = re.split(r"\s+Учредители", v)[0]
+    v = re.sub(r"\s*…\s*(?:,\s*\d{4})?$", "", v)  # a cut line
+    v = re.sub(r"[,;]?\s*(?:19|20)\d{2}$", "", v)  # , 2021
+    v = re.sub(r"[,;]\s*(?:pp\.?\s*)?[A-Za-z]{0,2}\d+[A-Za-z]?(?:\s*[-–]\s*[A-Za-z]{0,2}\d+[A-Za-z]?)?$", "", v)  # , 1-15  /  , 1970091  /  , S98
+    v = re.sub(r"\s+\d{1,4}\s*\([^)]*\)$", "", v)  # 22 (3)
+    v = re.sub(r"\s+\d{1,4}$", "", v)  # trailing volume
+    v = re.sub(r"[,;]\s*(?:pp\.?\s*)?[A-Za-z]{0,2}\d+[A-Za-z]?(?:\s*[-–]\s*[A-Za-z]{0,2}\d+[A-Za-z]?)?$", "", v)  # pages left after the volume
+    v = re.sub(r"^(?:\d{4}|\d+(?:st|nd|rd|th))\s+", "", v)  # leading year / edition
+    return v.strip(" ,;")
+
+
+# ---------------------------------------------------------------- metrics
+
+def h_index(counts):
+    c = sorted(counts, reverse=True)
+    return sum(1 for i, x in enumerate(c, 1) if x >= i)
+
+
+def i10_index(counts):
+    return sum(1 for x in counts if x >= 10)
+
+
+# ---------------------------------------------------------------- io
+
+def load_roster():
+    with ROSTER.open(encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    for r in rows:
+        r["aliases"] = [a.strip() for a in (r.get("aliases") or "").split(";") if a.strip()]
+        r["openalex_ids"] = [a.strip() for a in (r.get("openalex_ids") or "").split(";") if a.strip()]
+        ja = (r.get("name_ja") or "").strip()
+        r["names"] = list(dict.fromkeys([r["name"], *r["aliases"], *([ja] if ja and not ja.isascii() else [])]))
+    return [r for r in rows if r["approved"] == "yes"]
+
+
+def read_csv(path):
+    if not Path(path).exists():
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def load_json(path, default=None):
+    p = Path(path)
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else default
+
+
+def save_json(path, data):
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+# ---------------------------------------------------------------- OpenAlex access
+
+class OpenAlexBudget(RuntimeError):
+    """The anonymous daily budget (shared per IP) is used up, or the key's is."""
+
+
+def openalex_key():
+    """The key is read from the environment and never printed or stored."""
+    import os
+    return os.environ.get("OPENALEX_API_KEY", "").strip()
+
+
+def with_key(url):
+    k = openalex_key()
+    if k and "api.openalex.org" in url and "api_key=" not in url:
+        return url + ("&" if "?" in url else "?") + "api_key=" + k
+    return url
+
+
+def budget_check(payload):
+    """Raise on the 'Insufficient budget' answer (a dict with an `error` key); other payloads pass through."""
+    if isinstance(payload, dict) and payload.get("error") and "budget" in str(payload.get("message", "")).lower():
+        msg = ("OpenAlex daily budget is used up (resets at midnight UTC). Set OPENALEX_API_KEY "
+               "(free key: https://help.openalex.org/api/authentication/) and run again.")
+        note_status("openalex_budget", msg)
+        raise OpenAlexBudget(msg)
+    return payload
+
+
+# ---------------------------------------------------------------- pipeline status (shown on the Issues page)
+
+STATUS = WORK / "status.json"
+_cleared = set()
+
+
+def note_status(key, message):
+    """Record (or, with message None, clear) a blocking condition such as a rate limit."""
+    data = load_json(STATUS, {})
+    if message is None:
+        if key not in data:
+            return
+        del data[key]
+    else:
+        data[key] = {"message": message, "since": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
+    save_json(STATUS, data)
+
+
+def clear_status(key):
+    if key not in _cleared:
+        _cleared.add(key)
+        note_status(key, None)

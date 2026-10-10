@@ -1,0 +1,273 @@
+[
+ {
+  "group": "blocked",
+  "title": "OpenAlex budget used up",
+  "detail": "OpenAlex daily budget is used up (resets at midnight UTC). Set OPENALEX_API_KEY (free key: https://help.openalex.org/api/authentication/) and run again. (first seen 2026-10-10 12:55 UTC). Affected: citation counts for people without a Scholar profile, author lists from ORCID, and the independent check of every paper.",
+  "action": "Create a key at openalex.org (free tier first), then in the shell that runs the pipeline: export OPENALEX_API_KEY=...  and  make snapshot. Do not paste the key into chat or commit it.",
+  "severity": "blocked",
+  "who": []
+ },
+ {
+  "group": "blocked",
+  "title": "20 Scholar profile IDs are queued, not yet read",
+  "detail": "They are in backend/work/pending_ids.txt and join the roster when Google answers.",
+  "action": "Runs automatically in make snapshot (add_profile.py --pending).",
+  "severity": "blocked",
+  "who": []
+ },
+ {
+  "group": "decide",
+  "title": "14 people on the screening list have no profile link",
+  "detail": "Without a Google Scholar, Researchmap or ORCID link their papers can only come from OpenAlex (papers printed with an NICT affiliation).",
+  "action": "Send a Scholar link (or Researchmap / ORCID) for each, or run fetch_openalex_people.py once OpenAlex has budget.",
+  "severity": "todo",
+  "who": [
+   {
+    "slug": "takashi-matsuda",
+    "name": "Takashi Matsuda",
+    "linked": false
+   },
+   {
+    "slug": "changwoo-pyo",
+    "name": "Changwoo Pyo",
+    "linked": false
+   },
+   {
+    "slug": "homare-murakami",
+    "name": "Homare Murakami",
+    "linked": false
+   },
+   {
+    "slug": "hikaru-kawasaki",
+    "name": "Hikaru Kawasaki",
+    "linked": false
+   },
+   {
+    "slug": "row-12",
+    "name": "三浦 龍",
+    "linked": false
+   },
+   {
+    "slug": "azril-haniz",
+    "name": "Azril Haniz",
+    "linked": false
+   },
+   {
+    "slug": "arif-dataesatu",
+    "name": "Arif Dataesatu",
+    "linked": false
+   },
+   {
+    "slug": "ekolle-zie-eya",
+    "name": "Ekolle Zie Eya",
+    "linked": false
+   },
+   {
+    "slug": "murai-hideshi",
+    "name": "Murai Hideshi",
+    "linked": false
+   },
+   {
+    "slug": "ou-zhao",
+    "name": "Ou Zhao",
+    "linked": false
+   },
+   {
+    "slug": "suyong-eum",
+    "name": "Suyong Eum",
+    "linked": false
+   },
+   {
+    "slug": "atushi-wakayama",
+    "name": "Atushi Wakayama",
+    "linked": false
+   },
+   {
+    "slug": "masaaki-maruyama",
+    "name": "Masaaki Maruyama",
+    "linked": false
+   },
+   {
+    "slug": "kazuo-ibuka",
+    "name": "Kazuo Ibuka",
+    "linked": false
+   }
+  ]
+ },
+ {
+  "group": "blocked",
+  "title": "Gabriel Villardi: Scholar profile not yet read",
+  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
+  "action": "make snapshot",
+  "severity": "blocked",
+  "who": [
+   {
+    "slug": "gabriel-villardi",
+    "name": "Gabriel Villardi",
+    "linked": false
+   }
+  ]
+ },
+ {
+  "group": "blocked",
+  "title": "Michiharu Nakamura: Scholar profile not yet read",
+  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
+  "action": "make snapshot",
+  "severity": "blocked",
+  "who": [
+   {
+    "slug": "michiharu-nakamura",
+    "name": "Michiharu Nakamura",
+    "linked": false
+   }
+  ]
+ },
+ {
+  "group": "blocked",
+  "title": "Morio Toyoshima: Scholar profile not yet read",
+  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
+  "action": "make snapshot",
+  "severity": "blocked",
+  "who": [
+   {
+    "slug": "morio-toyoshima",
+    "name": "Morio Toyoshima",
+    "linked": false
+   }
+  ]
+ },
+ {
+  "group": "blocked",
+  "title": "Hiroaki Harai: Scholar profile not yet read",
+  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
+  "action": "make snapshot",
+  "severity": "blocked",
+  "who": [
+   {
+    "slug": "hiroaki-harai",
+    "name": "Hiroaki Harai",
+    "linked": false
+   }
+  ]
+ },
+ {
+  "group": "decide",
+  "title": "Keren Li: the source lists no papers",
+  "detail": "The snapshot exists but holds no paper.",
+  "action": "Send another source, or run fetch_openalex_people.py --only keren-li",
+  "severity": "todo",
+  "who": [
+   {
+    "slug": "keren-li",
+    "name": "Keren Li",
+    "linked": true
+   }
+  ]
+ },
+ {
+  "group": "check",
+  "title": "No confirmed OpenAlex author ID",
+  "detail": "Their papers are checked by exact title only (and by Scholar's own author list). An author ID makes the independent check stronger.",
+  "action": "fetch_openalex.py --resolve proposes IDs in work/openalex_candidates.csv; confirm each by hand into roster.csv openalex_ids.",
+  "severity": "todo",
+  "who": [
+   {
+    "slug": "thanh-le",
+    "name": "Thanh Le",
+    "linked": true
+   },
+   {
+    "slug": "kazuhiro-oiwa",
+    "name": "Kazuhiro Oiwa",
+    "linked": true
+   }
+  ]
+ },
+ {
+  "group": "check",
+  "title": "Papers whose author list could not be checked",
+  "detail": "Scholar prints a cut author list that does not show the person and no independent record was found. They are shown, not counted.",
+  "action": "fetch_scholar.py --details --only <slug> reads the full list; or decide per paper in paper_overrides.csv.",
+  "severity": "todo",
+  "who": [
+   {
+    "slug": "nguyen-duc-phuc",
+    "name": "Nguyen Duc Phuc (4)",
+    "linked": true
+   }
+  ]
+ },
+ {
+  "group": "check",
+  "title": "Venues the matcher could not classify",
+  "detail": "Counted papers whose venue is neither a journal in SCImago nor a conference in CORE, nor a preprint or patent. They sit in 'Other'.",
+  "action": "Add rows to backend/venue_overrides.csv (venue, kind, quartile, core_rank).",
+  "severity": "todo",
+  "who": [
+   {
+    "slug": "takeshi-matsumura",
+    "name": "takeshi-matsumura (10)",
+    "linked": true
+   },
+   {
+    "slug": "huan-bang-li",
+    "name": "huan-bang-li (18)",
+    "linked": true
+   },
+   {
+    "slug": "hirokazu-sawada",
+    "name": "hirokazu-sawada (9)",
+    "linked": true
+   },
+   {
+    "slug": "thanh-le",
+    "name": "thanh-le (1)",
+    "linked": true
+   },
+   {
+    "slug": "kazuhiro-oiwa",
+    "name": "kazuhiro-oiwa (74)",
+    "linked": true
+   },
+   {
+    "slug": "nguyen-duc-phuc",
+    "name": "nguyen-duc-phuc (5)",
+    "linked": true
+   }
+  ]
+ },
+ {
+  "group": "info",
+  "title": "People with no Scholar profile figure",
+  "detail": "Papers come from Researchmap, ORCID or OpenAlex; citation counts are OpenAlex's, which index fewer papers than Scholar, so their totals are not comparable with Scholar totals.",
+  "action": "",
+  "severity": "todo",
+  "who": [
+   {
+    "slug": "huan-bang-li",
+    "name": "Huan-Bang Li (researchmap)",
+    "linked": true
+   },
+   {
+    "slug": "takeshi-matsumura",
+    "name": "Takeshi Matsumura (openalex)",
+    "linked": true
+   },
+   {
+    "slug": "hirokazu-sawada",
+    "name": "Hirokazu Sawada (openalex)",
+    "linked": true
+   },
+   {
+    "slug": "nguyen-duc-phuc",
+    "name": "Nguyen Duc Phuc (orcid)",
+    "linked": true
+   },
+   {
+    "slug": "keren-li",
+    "name": "Keren Li (researchmap)",
+    "linked": true
+   }
+  ]
+ }
+]

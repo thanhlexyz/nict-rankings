@@ -1,0 +1,67 @@
+{{ define "main" -}}
+{{- $slug := .Params.slug }}
+{{- $p := index (where hugo.Data.people "slug" $slug) 0 }}
+{{- $papers := index hugo.Data.papers $slug }}
+{{- $ch := hugo.Data.charts }}
+<p class="crumb"><a href="{{ "/" | relURL }}">← Ranking</a></p>
+<h1>{{ $p.name }}{{ with $p.name_ja }} <span class="ja">{{ . }}</span>{{ end }}</h1>
+<p class="links"><a href="{{ $p.scholar_url }}" rel="noopener">{{ if eq $p.source "researchmap" }}Researchmap{{ else if eq $p.source "orcid" }}ORCID{{ else }}Google Scholar{{ end }} profile</a>
+ · snapshot of {{ $p.fetched }}{{ with $p.affiliation }} · {{ . }}{{ end }}</p>
+{{ with $p.notes }}<p class="note">{{ . }}</p>{{ end }}
+
+<section class="tiles">
+  <div class="tile"><span class="big">{{ if $p.has_claim }}{{ lang.FormatNumber 0 $p.claimed.citations }}{{ else }}–{{ end }}</span><span>{{ if $p.has_claim }}claimed on the profile{{ else }}no Scholar profile{{ end }}</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $p.counted.citations }}</span><span>counted, in {{ $p.counted.papers }} papers</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $p.removed.citations }}</span><span>in {{ $p.removed.papers }} papers whose author list does not name the person</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $p.unconfirmed.citations }}</span><span>unconfirmed, in {{ $p.unconfirmed.papers }} papers</span></div>
+</section>
+
+<table class="kv">
+<tr><th></th><th>Profile</th><th>Counted</th></tr>
+<tr><th class="l">Citations</th><td>{{ if $p.has_claim }}{{ $p.claimed.citations }}{{ else }}–{{ end }}</td><td>{{ $p.counted.citations }}</td></tr>
+<tr><th class="l">h-index</th><td>{{ if $p.has_claim }}{{ $p.claimed.h }}{{ else }}–{{ end }}</td><td>{{ $p.counted.h }}</td></tr>
+<tr><th class="l">i10-index</th><td>{{ if $p.has_claim }}{{ $p.claimed.i10 }}{{ else }}–{{ end }}</td><td>{{ $p.counted.i10 }}</td></tr>
+<tr><th class="l">Cited since {{ hugo.Data.overview.from_year }} (all papers)</th><td>{{ if $p.has_claim }}{{ $p.claimed.since }}{{ else }}–{{ end }}</td><td>–</td></tr>
+<tr><th class="l">Papers published since {{ hugo.Data.overview.from_year }}</th><td>–</td><td>{{ $p.since_window.papers }} papers, {{ $p.since_window.citations }} citations, h {{ $p.since_window.h }}</td></tr>
+</table>
+
+{{ with index $ch.person_years $slug }}<h2>Citations per year{{ if $p.has_claim }} (profile){{ else }} (OpenAlex){{ end }}</h2><figure>{{ . | safeHTML }}</figure>
+<p class="note">Strong bars: {{ hugo.Data.overview.from_year }} onwards.</p>{{ end }}
+{{ with index $ch.monthly_people $slug }}<h2>Monthly citations</h2><figure>{{ . | safeHTML }}</figure>{{ end }}
+
+<h2>Venues of counted papers</h2>
+{{- $v := $p.venues }}{{- $s := $p.venues_since }}
+<table class="kv venues">
+<tr><th></th><th>Journal Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Journal, not in SCImago</th><th>A*</th><th>A</th><th>B</th><th>C</th><th>Unranked conf.</th><th>Preprint</th><th>Patent</th><th>Other</th></tr>
+<tr><th class="l">All years</th><td>{{ $v.journal_q1 }}</td><td>{{ $v.journal_q2 }}</td><td>{{ $v.journal_q3 }}</td><td>{{ $v.journal_q4 }}</td><td>{{ $v.journal_other }}</td><td>{{ $v.conf_astar }}</td><td>{{ $v.conf_a }}</td><td>{{ $v.conf_b }}</td><td>{{ $v.conf_c }}</td><td>{{ $v.conf_unranked }}</td><td>{{ $v.preprint }}</td><td>{{ $v.patent }}</td><td>{{ $v.other }}</td></tr>
+<tr><th class="l">Since {{ hugo.Data.overview.from_year }}</th><td>{{ $s.journal_q1 }}</td><td>{{ $s.journal_q2 }}</td><td>{{ $s.journal_q3 }}</td><td>{{ $s.journal_q4 }}</td><td>{{ $s.journal_other }}</td><td>{{ $s.conf_astar }}</td><td>{{ $s.conf_a }}</td><td>{{ $s.conf_b }}</td><td>{{ $s.conf_c }}</td><td>{{ $s.conf_unranked }}</td><td>{{ $s.preprint }}</td><td>{{ $s.patent }}</td><td>{{ $s.other }}</td></tr>
+</table>
+
+<h2>Papers</h2>
+<div class="filters">
+  <label>Show <select id="status-filter">
+    <option value="">all papers</option>
+    <option value="counted">counted</option>
+    <option value="not_listed">author list does not name the person</option>
+    <option value="unconfirmed">unconfirmed</option>
+    <option value="outside">outside the period at NICT</option>
+  </select></label>
+  <label>Since <select id="year-filter"><option value="">any year</option><option value="{{ hugo.Data.overview.from_year }}">{{ hugo.Data.overview.from_year }}</option></select></label>
+</div>
+<div class="tablewrap">
+<table class="sortable papers" id="papers">
+<thead><tr><th class="l" data-type="text">Title</th><th>Year</th><th>Cited</th><th class="l" data-type="text">Venue</th><th class="l" data-type="text">Class</th><th class="l" data-type="text">Status</th></tr></thead>
+<tbody>
+{{- range $papers }}
+<tr data-status="{{ if .counted }}counted{{ else }}{{ .status }}{{ end }}" data-year="{{ .year }}">
+  <td class="l" data-v="{{ .title }}"><a href="{{ .url }}" rel="noopener">{{ .title }}</a><div class="authors">{{ .authors }}</div></td>
+  <td data-v="{{ .year | default 0 }}">{{ .year }}</td>
+  <td data-v="{{ .cites }}">{{ .cites }}</td>
+  <td class="l" data-v="{{ .venue }}">{{ .venue }}</td>
+  <td class="l" data-v="{{ .venue_key }}">{{ if eq .kind "journal" }}Journal{{ with .quartile }} {{ . }}{{ end }}{{ else if eq .kind "conference" }}Conf. {{ .core_rank }}{{ else }}{{ .kind | title }}{{ end }}</td>
+  <td class="l st-{{ .status }}" data-v="{{ .status }}"><span title="{{ .reason }}">{{ .status_text }}</span></td>
+</tr>
+{{- end }}
+</tbody></table>
+</div>
+{{- end }}

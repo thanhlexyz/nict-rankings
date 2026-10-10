@@ -1,0 +1,48 @@
+{{ define "main" -}}
+{{- $issues := hugo.Data.issues }}
+{{- $o := hugo.Data.overview }}
+<h1>Open issues</h1>
+<p class="lede">What is still missing or waiting on a decision, rebuilt from the data on every build. Snapshot of {{ $o.built }}.</p>
+
+{{ $groups := slice
+   (dict "key" "decide" "title" "Needs your decision")
+   (dict "key" "blocked" "title" "Blocked by an outside limit")
+   (dict "key" "check" "title" "Data to check")
+   (dict "key" "info" "title" "Good to know") }}
+<nav class="issue-nav">
+{{- range $groups }}{{ $k := .key }}{{ $n := len (where $issues "group" $k) }}{{ if $n }}<a href="#{{ $k }}">{{ .title }} <span class="count">{{ $n }}</span></a>{{ end }}{{ end }}
+</nav>
+
+{{- range $groups }}
+{{- $g := .key }}
+{{- $items := where $issues "group" $g }}
+{{- if $items }}
+<section id="{{ $g }}" class="issues">
+<h2>{{ .title }}</h2>
+{{- range $items }}
+<article class="issue issue-{{ .group }}">
+  <h3>{{ .title }}</h3>
+  <p>{{ .detail }}</p>
+  {{- with .who }}
+  <ul class="who">
+    {{- range . }}<li>{{ if .linked }}<a href="{{ printf "people/%s/" .slug | relURL }}">{{ .name }}</a>{{ else }}{{ .name }}{{ end }}</li>{{ end }}
+  </ul>
+  {{- end }}
+  {{- with .action }}<p class="action"><strong>Next:</strong> {{ . }}</p>{{ end }}
+</article>
+{{- end }}
+</section>
+{{- end }}
+{{- end }}
+{{- if not $issues }}<p class="note">Nothing open.</p>{{ end }}
+
+<section class="issues">
+<h2>Setting up the OpenAlex key</h2>
+<ol>
+  <li>Create a key at <a href="https://openalex.org/" rel="noopener">openalex.org</a> (the free tier has its own daily budget, separate from the shared
+  anonymous one that is used up on this network).</li>
+  <li>Put it in the shell that runs the pipeline: <code>export OPENALEX_API_KEY=…</code>. The scripts read it from the environment and never print or store it.</li>
+  <li>Run <code>make snapshot</code>. If the free budget is too small for a full run, the scripts stop with a message and keep what they have.</li>
+</ol>
+</section>
+{{- end }}

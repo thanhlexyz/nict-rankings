@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+<meta name="description" content="{{ site.Params.description }}">
+{{ if site.Params.local }}<meta name="robots" content="noindex, nofollow">{{ end }}
+{{- $css := resources.Get "style.css" | fingerprint }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{{ "/" | relURL }}">NICT citations, checked</a>
+  <nav>
+    {{- range site.Menus.main }}<a href="{{ .URL }}"{{ if $.IsMenuCurrent "main" . }} aria-current="page"{{ end }}>{{ .Name }}</a>{{ end }}
+  </nav>
+  <button id="theme" type="button" aria-label="Toggle dark mode">◐</button>
+</header>
+<main>
+{{ block "main" . }}{{ end }}
+</main>
+<footer>
+  <p>Snapshot of {{ hugo.Data.overview.built }}. Figures are counted from Google Scholar profiles and checked against OpenAlex; see <a href="{{ "about/" | relURL }}">About</a> for the rules.</p>
+</footer>
+{{- $js := resources.Get "site.js" | fingerprint }}
+<script src="{{ $js.RelPermalink }}" defer></script>
+</body>
+</html>

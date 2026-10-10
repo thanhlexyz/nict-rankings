@@ -1,0 +1,31 @@
+{{ define "main" -}}
+{{- $o := hugo.Data.overview }}
+{{- $people := hugo.Data.people }}
+<h1>Whose citations are really theirs?</h1>
+<p class="lede">Citation counts on Google Scholar profiles of NICT researchers, counted again for the papers that
+actually name the researcher as an author. Journal papers are grouped by SCImago quartile and conference papers by CORE rank.</p>
+
+<section class="tiles" aria-label="Totals">
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.claimed }}</span><span>claimed on {{ $o.people }} Scholar profiles</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.counted }}</span><span>counted: papers that name the person</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.removed }}</span><span>in {{ $o.papers_removed }} papers whose author list does not</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.unconfirmed }}</span><span>unconfirmed, in {{ $o.papers_unconfirmed }} papers</span></div>
+</section>
+
+<div class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="all">All years</button>
+  <button role="tab" aria-selected="false" data-tab="since">Since {{ $o.from_year }} (last five years)</button>
+</div>
+<p class="note">Click a column to sort. Cups mark the best three values of the sorted column. Hover a header for its definition.</p>
+<div class="pane" data-pane="all">{{ partial "ranking-table.html" (dict "people" $people "window" "all" "from" $o.from_year) }}</div>
+<div class="pane" data-pane="since" hidden>{{ partial "ranking-table.html" (dict "people" $people "window" "since" "from" $o.from_year) }}</div>
+
+{{ with $o.waiting }}
+<details class="waiting"><summary>{{ len . }} people on the screening list are waiting for a profile or a snapshot</summary>
+<ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul></details>
+{{ end }}
+
+<h2>Claimed against counted</h2>
+{{ hugo.Data.charts.citations_legend | safeHTML }}
+<figure>{{ hugo.Data.charts.citations | safeHTML }}</figure>
+{{- end }}
