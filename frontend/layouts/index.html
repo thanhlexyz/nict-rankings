@@ -6,8 +6,8 @@
 actually name the researcher as an author. Journal papers are grouped by SCImago quartile and conference papers by CORE rank.</p>
 
 <section class="tiles" aria-label="Totals">
-  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.claimed }}</span><span>claimed on {{ $o.people }} Scholar profiles</span></div>
-  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.counted }}</span><span>counted: papers that name the person</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.claimed }}</span><span>claimed on {{ $o.claimed_people }} Scholar profiles</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.counted }}</span><span>counted on those profiles: papers that name the person</span></div>
   <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.removed }}</span><span>in {{ $o.papers_removed }} papers whose author list does not</span></div>
   <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.unconfirmed }}</span><span>unconfirmed, in {{ $o.papers_unconfirmed }} papers</span></div>
 </section>
@@ -16,6 +16,7 @@ actually name the researcher as an author. Journal papers are grouped by SCImago
   <button role="tab" aria-selected="true" data-tab="all">All years</button>
   <button role="tab" aria-selected="false" data-tab="since">Since {{ $o.from_year }} (last five years)</button>
 </div>
+{{ if $o.other_people }}<p class="note">{{ $o.other_people }} further people have no Scholar profile: {{ lang.FormatNumber 0 $o.counted_other }} citations counted from Researchmap / ORCID / OpenAlex records, shown in the table with no "claimed" figure.</p>{{ end }}
 <p class="note">Click a column to sort. Cups mark the best three values of the sorted column. Hover a header for its definition.</p>
 <div class="pane" data-pane="all">{{ partial "ranking-table.html" (dict "people" $people "window" "all" "from" $o.from_year) }}</div>
 <div class="pane" data-pane="since" hidden>{{ partial "ranking-table.html" (dict "people" $people "window" "since" "from" $o.from_year) }}</div>

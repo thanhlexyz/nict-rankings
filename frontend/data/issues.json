@@ -96,8 +96,8 @@
  },
  {
   "group": "blocked",
-  "title": "Gabriel Villardi: Scholar profile not yet read",
-  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
+  "title": "4 Scholar profiles are in the roster but not yet read",
+  "detail": "The ID is known; Google blocked the page or the run has not reached it. Their rows are missing from the ranking until then.",
   "action": "make snapshot",
   "severity": "blocked",
   "who": [
@@ -105,44 +105,17 @@
     "slug": "gabriel-villardi",
     "name": "Gabriel Villardi",
     "linked": false
-   }
-  ]
- },
- {
-  "group": "blocked",
-  "title": "Michiharu Nakamura: Scholar profile not yet read",
-  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
-  "action": "make snapshot",
-  "severity": "blocked",
-  "who": [
+   },
    {
     "slug": "michiharu-nakamura",
     "name": "Michiharu Nakamura",
     "linked": false
-   }
-  ]
- },
- {
-  "group": "blocked",
-  "title": "Morio Toyoshima: Scholar profile not yet read",
-  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
-  "action": "make snapshot",
-  "severity": "blocked",
-  "who": [
+   },
    {
     "slug": "morio-toyoshima",
     "name": "Morio Toyoshima",
     "linked": false
-   }
-  ]
- },
- {
-  "group": "blocked",
-  "title": "Hiroaki Harai: Scholar profile not yet read",
-  "detail": "The ID is in the roster; the page was blocked or the run has not reached it.",
-  "action": "make snapshot",
-  "severity": "blocked",
-  "who": [
+   },
    {
     "slug": "hiroaki-harai",
     "name": "Hiroaki Harai",
@@ -153,8 +126,8 @@
  {
   "group": "decide",
   "title": "Keren Li: the source lists no papers",
-  "detail": "The snapshot exists but holds no paper.",
-  "action": "Send another source, or run fetch_openalex_people.py --only keren-li",
+  "detail": "The source's profile lists no papers, so the snapshot is empty.",
+  "action": "Decided: take his NICT-affiliated papers from OpenAlex. Runs in make snapshot (fetch_openalex_people.py) once OpenAlex has budget.",
   "severity": "todo",
   "who": [
    {

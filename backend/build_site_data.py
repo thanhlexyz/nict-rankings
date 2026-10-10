@@ -152,16 +152,16 @@ def collect_issues(roster, snaps, people, report_by_slug):
              "Without a Google Scholar, Researchmap or ORCID link their papers can only come from OpenAlex (papers printed with an NICT affiliation).",
              who=[(r["slug"], r["name"]) for r in no_id],
              action="Send a Scholar link (or Researchmap / ORCID) for each, or run fetch_openalex_people.py once OpenAlex has budget.")
-    for r in roster:
-        snap = snaps.get(r["slug"])
-        if r["scholar_id"] and not snap:
-            item("blocked", f"{r['name']}: Scholar profile not yet read", "The ID is in the roster; the page was blocked or the run has not reached it.",
-                 who=[(r["slug"], r["name"])], action="make snapshot", severity="blocked")
+    unread = [r for r in roster if r["scholar_id"] and r["slug"] not in snaps]
+    if unread:
+        item("blocked", f"{len(unread)} Scholar profiles are in the roster but not yet read",
+             "The ID is known; Google blocked the page or the run has not reached it. Their rows are missing from the ranking until then.",
+             who=[(r["slug"], r["name"]) for r in unread], action="make snapshot", severity="blocked")
     # snapshots with no papers
     for slug, s in snaps.items():
         if not s.get("papers"):
-            item("decide", f"{s.get('name', slug)}: the source lists no papers", "The snapshot exists but holds no paper.",
-                 who=[(slug, s.get("name", slug))], action="Send another source, or run fetch_openalex_people.py --only " + slug)
+            item("decide", f"{s.get('name', slug)}: the source lists no papers", "The source's profile lists no papers, so the snapshot is empty.",
+                 who=[(slug, s.get("name", slug))], action="Decided: take his NICT-affiliated papers from OpenAlex. Runs in make snapshot (fetch_openalex_people.py) once OpenAlex has budget.")
     ex = [r for r in roster if "ex-nict" in (r.get("notes") or "").lower() and not (r.get("period_from") or r.get("period_to"))]
     if ex:
         item("decide", "Years at NICT are not set for people who left",
@@ -223,7 +223,10 @@ def main():
             by_year[y] += v
     overview = {
         "built": TODAY.isoformat(), "from_year": FROM_YEAR, "people": len(people),
-        "claimed": sum_(lambda r: r["claimed"]["citations"]), "claimed_people": sum_(lambda r: 1 if r["has_claim"] else 0), "counted": sum_(lambda r: r["counted"]["citations"]),
+        "claimed": sum_(lambda r: r["claimed"]["citations"]), "claimed_people": sum_(lambda r: 1 if r["has_claim"] else 0),
+        "counted": sum_(lambda r: r["counted"]["citations"] if r["has_claim"] else 0),
+        "counted_other": sum_(lambda r: 0 if r["has_claim"] else r["counted"]["citations"]),
+        "other_people": sum_(lambda r: 0 if r["has_claim"] else 1),
         "unconfirmed": sum_(lambda r: r["unconfirmed"]["citations"]), "removed": sum_(lambda r: r["removed"]["citations"]),
         "papers": sum_(lambda r: r["claimed"]["papers"]), "papers_counted": sum_(lambda r: r["counted"]["papers"]),
         "papers_removed": sum_(lambda r: r["removed"]["papers"]), "papers_unconfirmed": sum_(lambda r: r["unconfirmed"]["papers"]),
@@ -237,7 +240,7 @@ def main():
     # charts (inline SVG)
     seg = [("counted", "s1", "Counted"), ("unconfirmed", "s2", "Unconfirmed"), ("removed", "s3", "Author list does not name the person")]
     rows_c = [(r["name"], f"people/{r['slug']}/", {"counted": r["counted"]["citations"], "unconfirmed": r["unconfirmed"]["citations"],
-                                                   "removed": r["removed"]["citations"]}) for r in people]
+                                                   "removed": r["removed"]["citations"]}) for r in people]  # bar length = papers on the profile
     jq = [("journal_q1", "t0", "Q1"), ("journal_q2", "t1", "Q2"), ("journal_q3", "t2", "Q3"), ("journal_q4", "t3", "Q4"),
           ("journal_other", "t4", "Journal, not in SCImago")]
     cr = [("conf_astar", "t0", "A*"), ("conf_a", "t1", "A"), ("conf_b", "t2", "B"), ("conf_c", "t3", "C"), ("conf_unranked", "t4", "Unranked")]
