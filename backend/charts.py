@@ -67,17 +67,18 @@ def bars_v(points, width=560, height=190, from_x=None, unit="citations"):
     step = pw / n
     bw = min(step * 0.7, 28)
     out = [f'<svg class="chart" viewBox="0 0 {width} {height}" role="img" aria-label="{escape(unit)} per year">']
-    for i in range(0, 5):
-        y = 8 + ph - ph * i / 4
+    steps = int(mx) if mx <= 4 else 4  # whole-number ticks for tiny maxima
+    for i in range(0, steps + 1):
+        y = 8 + ph - ph * i / steps
         out.append(f'<line class="grid" x1="{left}" y1="{y:.1f}" x2="{width - 8}" y2="{y:.1f}"/>'
-                   f'<text class="axis" x="{left - 6}" y="{y + 4:.1f}" text-anchor="end">{fmt(mx * i / 4)}</text>')
+                   f'<text class="axis" x="{left - 6}" y="{y + 4:.1f}" text-anchor="end">{fmt(mx * i / steps)}</text>')
     for i, (x, v) in enumerate(points):
         cx = left + step * i + step / 2
         bh = ph * v / mx
-        cls = "s1" if (from_x is None or str(x) >= str(from_x)) else "old"
+        cls = "s1" if (from_x is None or str(x).rstrip("*") >= str(from_x)) else "old"
         out.append(f'<rect class="{cls}" x="{cx - bw / 2:.1f}" y="{8 + ph - bh:.1f}" width="{bw:.1f}" height="{max(bh, 0):.1f}" rx="2">'
                    f'<title>{escape(str(x))}: {fmt(v)} {escape(unit)}</title></rect>')
-        if n <= 14 or i % 2 == 0:
+        if i % max(1, -(-n // 12)) == 0:  # about twelve labels at most
             out.append(f'<text class="axis" x="{cx:.1f}" y="{height - 8}" text-anchor="middle">{escape(str(x))}</text>')
     out.append("</svg>")
     return "".join(out)
@@ -124,3 +125,31 @@ def spark(values, width=120, height=28):
     pts = [(4 + (width - 8) * i / (len(values) - 1), 4 + (height - 8) * (1 - (v - lo) / span)) for i, v in enumerate(values)]
     return (f'<svg class="spark" viewBox="0 0 {width} {height}" aria-hidden="true"><polyline class="ln s1" points="'
             + " ".join(f"{a:.1f},{b:.1f}" for a, b in pts) + f'"/><circle class="dot s1" cx="{pts[-1][0]:.1f}" cy="{pts[-1][1]:.1f}" r="3"/></svg>')
+
+
+def pie(slices, size=190):
+    """slices: [(label, css class, value)]. Returns an SVG pie (hover titles) followed by a legend with counts and shares."""
+    import math
+    total = sum(v for _, _, v in slices)
+    if total <= 0:
+        return '<p class="note">No papers.</p>'
+    r, cx, cy = size / 2 - 4, size / 2, size / 2
+    parts, ang = [], -math.pi / 2
+    for label, cls, v in slices:
+        if v <= 0:
+            continue
+        share = v / total
+        title = f"<title>{escape(label)}: {v} ({share * 100:.0f}%)</title>"
+        if share >= 0.9999:
+            parts.append(f'<circle class="{cls}" cx="{cx}" cy="{cy}" r="{r}">{title}</circle>')
+            continue
+        a2 = ang + share * 2 * math.pi
+        x1, y1, x2, y2 = cx + r * math.cos(ang), cy + r * math.sin(ang), cx + r * math.cos(a2), cy + r * math.sin(a2)
+        large = 1 if share > 0.5 else 0
+        parts.append(f'<path class="{cls} slice" d="M{cx},{cy} L{x1:.2f},{y1:.2f} A{r},{r} 0 {large} 1 {x2:.2f},{y2:.2f} Z">{title}</path>')
+        ang = a2
+    svg = f'<svg class="pie" viewBox="0 0 {size} {size}" role="img" aria-label="paper classes">' + "".join(parts) + "</svg>"
+    leg = '<ul class="legend pielegend">' + "".join(
+        f'<li><span class="sw {cls}"></span>{escape(label)} <strong>{v}</strong> <span class="muted">({v / total * 100:.0f}%)</span></li>'
+        for label, cls, v in slices) + "</ul>"
+    return f'<div class="piebox">{svg}{leg}</div>'

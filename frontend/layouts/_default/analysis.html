@@ -1,17 +1,18 @@
 {{ define "main" -}}
 {{- $o := hugo.Data.overview }}{{- $ch := hugo.Data.charts }}
 <h1>Analysis</h1>
-<p class="lede">What the counted citations and papers look like in aggregate, for all years and for the last five years ({{ $o.from_year }} on).</p>
+<p class="lede">What the papers and citations look like in aggregate, for all years and for the last five years ({{ $o.from_year }} on). Source: OpenAlex.</p>
 
-<h2>Claimed and counted citations</h2>
+<h2>Citations per person</h2>
+<p class="note">Sorted by citations received since {{ $o.from_year }}.</p>
 {{ $ch.citations_legend | safeHTML }}
 <figure>{{ $ch.citations | safeHTML }}</figure>
 
-<h2>Citations received per year (all profiles)</h2>
+<h2>Citations received per year (all people)</h2>
 <figure>{{ $ch.years | safeHTML }}</figure>
-<p class="note">Sum of the "cited by" bars of the Scholar profiles. Strong bars: {{ $o.from_year }} onwards.
-Claimed citations since {{ $o.from_year }}: <strong>{{ lang.FormatNumber 0 $o.claimed_since }}</strong>; counted citations of papers published since {{ $o.from_year }}:
-<strong>{{ lang.FormatNumber 0 $o.counted_since }}</strong> in {{ $o.papers_since }} papers.</p>
+<p class="note">Sum of OpenAlex's per-year counts for the papers above; OpenAlex keeps the last ten years. Strong bars: {{ $o.from_year }} onwards.
+Citations received since {{ $o.from_year }}: <strong>{{ lang.FormatNumber 0 $o.received_since }}</strong>. Citations of papers published since {{ $o.from_year }}:
+<strong>{{ lang.FormatNumber 0 $o.citations_papers_since }}</strong> in {{ $o.papers_since }} papers.</p>
 
 <h2>Journal papers by SCImago quartile</h2>
 <h3>All years</h3>
@@ -28,10 +29,5 @@ Claimed citations since {{ $o.from_year }}: <strong>{{ lang.FormatNumber 0 $o.cl
 <figure>{{ $ch.conferences_since | safeHTML }}</figure>
 
 <h2>Institute totals</h2>
-{{- $v := $o.venues }}{{- $s := $o.venues_since }}
-<table class="kv venues">
-<tr><th></th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Journal, not in SCImago</th><th>A*</th><th>A</th><th>B</th><th>C</th><th>Unranked conf.</th><th>Preprint</th><th>Patent</th><th>Other</th></tr>
-<tr><th class="l">All years</th><td>{{ $v.journal_q1 }}</td><td>{{ $v.journal_q2 }}</td><td>{{ $v.journal_q3 }}</td><td>{{ $v.journal_q4 }}</td><td>{{ $v.journal_other }}</td><td>{{ $v.conf_astar }}</td><td>{{ $v.conf_a }}</td><td>{{ $v.conf_b }}</td><td>{{ $v.conf_c }}</td><td>{{ $v.conf_unranked }}</td><td>{{ $v.preprint }}</td><td>{{ $v.patent }}</td><td>{{ $v.other }}</td></tr>
-<tr><th class="l">Since {{ $o.from_year }}</th><td>{{ $s.journal_q1 }}</td><td>{{ $s.journal_q2 }}</td><td>{{ $s.journal_q3 }}</td><td>{{ $s.journal_q4 }}</td><td>{{ $s.journal_other }}</td><td>{{ $s.conf_astar }}</td><td>{{ $s.conf_a }}</td><td>{{ $s.conf_b }}</td><td>{{ $s.conf_c }}</td><td>{{ $s.conf_unranked }}</td><td>{{ $s.preprint }}</td><td>{{ $s.patent }}</td><td>{{ $s.other }}</td></tr>
-</table>
+{{ partial "venue-table.html" (dict "rows" (slice (dict "label" "All years" "v" $o.venues) (dict "label" (printf "Since %v" (int $o.from_year)) "v" $o.venues_since))) }}
 {{- end }}

@@ -1,6 +1,5 @@
 ---
 title: "People"
-headless: false
-_build:
+build:
   render: never
 ---

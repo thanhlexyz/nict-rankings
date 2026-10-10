@@ -1,0 +1,7 @@
+# Laid over hugo.toml by `make publish`: hugo --config hugo.toml,publish.toml
+# Set baseURL to the address GitHub Pages will serve (a project site lives under the repository name).
+baseURL = 'https://<account>.github.io/<repository>/'
+
+[params]
+  # lets search engines index the public site; keep true only when the maintainer has decided to publish
+  local = false

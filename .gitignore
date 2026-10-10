@@ -6,3 +6,4 @@ frontend/resources/
 frontend/.hugo_build.lock
 *.pyc
 raw.xlsx
+backend/untracked.csv

@@ -1,82 +1,12 @@
 [
  {
-  "group": "blocked",
-  "title": "OpenAlex budget used up",
-  "detail": "OpenAlex daily budget is used up (resets at midnight UTC). Set OPENALEX_API_KEY (free key: https://help.openalex.org/api/authentication/) and run again. (first seen 2026-10-10 12:55 UTC). Affected: citation counts for people without a Scholar profile, author lists from ORCID, and the independent check of every paper.",
-  "action": "Create a key at openalex.org (free tier first), then in the shell that runs the pipeline: export OPENALEX_API_KEY=...  and  make snapshot. Do not paste the key into chat or commit it.",
-  "severity": "blocked",
-  "who": []
- },
- {
-  "group": "blocked",
-  "title": "20 Scholar profile IDs are queued, not yet read",
-  "detail": "They are in backend/work/pending_ids.txt and join the roster when Google answers.",
-  "action": "Runs automatically in make snapshot (add_profile.py --pending).",
-  "severity": "blocked",
-  "who": []
- },
- {
   "group": "decide",
-  "title": "14 people on the screening list have no profile link",
-  "detail": "Without a Google Scholar, Researchmap or ORCID link their papers can only come from OpenAlex (papers printed with an NICT affiliation).",
-  "action": "Send a Scholar link (or Researchmap / ORCID) for each, or run fetch_openalex_people.py once OpenAlex has budget.",
+  "title": "2 people have no OpenAlex paper printed with an NICT affiliation",
+  "detail": "OpenAlex has no work on which their name appears together with NICT. Common causes: a different romanisation of the name, a name only in kanji, papers printed under another affiliation, or papers not yet indexed.",
+  "action": "Send an OpenAlex author ID or ORCID, or another spelling of the name (aliases in roster.csv), then make snapshot.",
   "severity": "todo",
+  "rows": [],
   "who": [
-   {
-    "slug": "takashi-matsuda",
-    "name": "Takashi Matsuda",
-    "linked": false
-   },
-   {
-    "slug": "changwoo-pyo",
-    "name": "Changwoo Pyo",
-    "linked": false
-   },
-   {
-    "slug": "homare-murakami",
-    "name": "Homare Murakami",
-    "linked": false
-   },
-   {
-    "slug": "hikaru-kawasaki",
-    "name": "Hikaru Kawasaki",
-    "linked": false
-   },
-   {
-    "slug": "row-12",
-    "name": "三浦 龍",
-    "linked": false
-   },
-   {
-    "slug": "azril-haniz",
-    "name": "Azril Haniz",
-    "linked": false
-   },
-   {
-    "slug": "arif-dataesatu",
-    "name": "Arif Dataesatu",
-    "linked": false
-   },
-   {
-    "slug": "ekolle-zie-eya",
-    "name": "Ekolle Zie Eya",
-    "linked": false
-   },
-   {
-    "slug": "murai-hideshi",
-    "name": "Murai Hideshi",
-    "linked": false
-   },
-   {
-    "slug": "ou-zhao",
-    "name": "Ou Zhao",
-    "linked": false
-   },
-   {
-    "slug": "suyong-eum",
-    "name": "Suyong Eum",
-    "linked": false
-   },
    {
     "slug": "atushi-wakayama",
     "name": "Atushi Wakayama",
@@ -86,86 +16,28 @@
     "slug": "masaaki-maruyama",
     "name": "Masaaki Maruyama",
     "linked": false
-   },
-   {
-    "slug": "kazuo-ibuka",
-    "name": "Kazuo Ibuka",
-    "linked": false
-   }
-  ]
- },
- {
-  "group": "blocked",
-  "title": "4 Scholar profiles are in the roster but not yet read",
-  "detail": "The ID is known; Google blocked the page or the run has not reached it. Their rows are missing from the ranking until then.",
-  "action": "make snapshot",
-  "severity": "blocked",
-  "who": [
-   {
-    "slug": "gabriel-villardi",
-    "name": "Gabriel Villardi",
-    "linked": false
-   },
-   {
-    "slug": "michiharu-nakamura",
-    "name": "Michiharu Nakamura",
-    "linked": false
-   },
-   {
-    "slug": "morio-toyoshima",
-    "name": "Morio Toyoshima",
-    "linked": false
-   },
-   {
-    "slug": "hiroaki-harai",
-    "name": "Hiroaki Harai",
-    "linked": false
-   }
-  ]
- },
- {
-  "group": "decide",
-  "title": "Keren Li: the source lists no papers",
-  "detail": "The source's profile lists no papers, so the snapshot is empty.",
-  "action": "Decided: take his NICT-affiliated papers from OpenAlex. Runs in make snapshot (fetch_openalex_people.py) once OpenAlex has budget.",
-  "severity": "todo",
-  "who": [
-   {
-    "slug": "keren-li",
-    "name": "Keren Li",
-    "linked": true
    }
   ]
  },
  {
   "group": "check",
-  "title": "No confirmed OpenAlex author ID",
-  "detail": "Their papers are checked by exact title only (and by Scholar's own author list). An author ID makes the independent check stronger.",
-  "action": "fetch_openalex.py --resolve proposes IDs in work/openalex_candidates.csv; confirm each by hand into roster.csv openalex_ids.",
+  "title": "2 people rest on provisional OpenAlex author IDs",
+  "detail": "No ID is confirmed in roster.csv, so the IDs are those OpenAlex attached to the person's name on works printing NICT, and all their works are counted. OpenAlex merges namesakes and splits one person over profiles, so the counts may include another person's papers or miss some.",
+  "action": "Check each person's IDs against their ORCID or homepage, then put the right ones (`;`-separated) into roster.csv openalex_ids (or send me the ORCID) and run make snapshot.",
   "severity": "todo",
+  "rows": [
+   "Huan-Bang Li: 185 papers from 7 author ID(s): A5024453724 (Hui Li: 695 works, 15,223 cited; Xihua University; Florida State University; Hebei University of Engineering), A5002381113 (Huan-Bang Li: 174 works, 1,313 cited; Meiji University; Yokohama National University; Nagoya Institute of Technology), A5057707792 (H. Li: 3 works, 13 cited; Siemens (Germany); National Institute of Information and Communications Technology), A5108364635 (Huan-Bang Li: 3 works, 40 cited; National Institute of Information and Communications Technology), A5111936266 (Huan-Bang Li: 3 works, 52 cited; National Institute of Information and Communications Technology), A5031663595 (H.-B. Li: 2 works, 113 cited; National Institute of Information and Communications Technology), A5105491574 (李 還幇: 2 works, 0 cited; National Institute of Information and Communications Technology)",
+   "Masafumi Moriyama: 49 papers from 1 author ID(s): A5003628976 (Masafumi Moriyama: 49 works, 75 cited; University of Electro-Communications; Institute of Electronics, Information and Communication Engineers; National Police Academy)"
+  ],
   "who": [
    {
-    "slug": "thanh-le",
-    "name": "Thanh Le",
+    "slug": "huan-bang-li",
+    "name": "Huan-Bang Li",
     "linked": true
    },
    {
-    "slug": "kazuhiro-oiwa",
-    "name": "Kazuhiro Oiwa",
-    "linked": true
-   }
-  ]
- },
- {
-  "group": "check",
-  "title": "Papers whose author list could not be checked",
-  "detail": "Scholar prints a cut author list that does not show the person and no independent record was found. They are shown, not counted.",
-  "action": "fetch_scholar.py --details --only <slug> reads the full list; or decide per paper in paper_overrides.csv.",
-  "severity": "todo",
-  "who": [
-   {
-    "slug": "nguyen-duc-phuc",
-    "name": "Nguyen Duc Phuc (4)",
+    "slug": "masafumi-moriyama",
+    "name": "Masafumi Moriyama",
     "linked": true
    }
   ]
@@ -176,71 +48,142 @@
   "detail": "Counted papers whose venue is neither a journal in SCImago nor a conference in CORE, nor a preprint or patent. They sit in 'Other'.",
   "action": "Add rows to backend/venue_overrides.csv (venue, kind, quartile, core_rank).",
   "severity": "todo",
+  "rows": [],
   "who": [
    {
     "slug": "takeshi-matsumura",
-    "name": "takeshi-matsumura (10)",
+    "name": "takeshi-matsumura (32)",
     "linked": true
    },
    {
     "slug": "huan-bang-li",
-    "name": "huan-bang-li (18)",
+    "name": "huan-bang-li (34)",
     "linked": true
    },
    {
     "slug": "hirokazu-sawada",
-    "name": "hirokazu-sawada (9)",
+    "name": "hirokazu-sawada (30)",
+    "linked": true
+   },
+   {
+    "slug": "takashi-matsuda",
+    "name": "takashi-matsuda (9)",
+    "linked": true
+   },
+   {
+    "slug": "changwoo-pyo",
+    "name": "changwoo-pyo (9)",
+    "linked": true
+   },
+   {
+    "slug": "homare-murakami",
+    "name": "homare-murakami (35)",
+    "linked": true
+   },
+   {
+    "slug": "gabriel-villardi",
+    "name": "gabriel-villardi (21)",
+    "linked": true
+   },
+   {
+    "slug": "hikaru-kawasaki",
+    "name": "hikaru-kawasaki (7)",
+    "linked": true
+   },
+   {
+    "slug": "ryu-miura",
+    "name": "ryu-miura (44)",
+    "linked": true
+   },
+   {
+    "slug": "azril-haniz",
+    "name": "azril-haniz (49)",
+    "linked": true
+   },
+   {
+    "slug": "michiharu-nakamura",
+    "name": "michiharu-nakamura (2)",
+    "linked": true
+   },
+   {
+    "slug": "arif-dataesatu",
+    "name": "arif-dataesatu (1)",
+    "linked": true
+   },
+   {
+    "slug": "ekolle-zie-eya",
+    "name": "ekolle-zie-eya (1)",
+    "linked": true
+   },
+   {
+    "slug": "murai-hideshi",
+    "name": "murai-hideshi (5)",
     "linked": true
    },
    {
     "slug": "thanh-le",
-    "name": "thanh-le (1)",
+    "name": "thanh-le (2)",
     "linked": true
    },
    {
-    "slug": "kazuhiro-oiwa",
-    "name": "kazuhiro-oiwa (74)",
+    "slug": "ou-zhao",
+    "name": "ou-zhao (7)",
+    "linked": true
+   },
+   {
+    "slug": "suyong-eum",
+    "name": "suyong-eum (14)",
+    "linked": true
+   },
+   {
+    "slug": "kazuo-ibuka",
+    "name": "kazuo-ibuka (10)",
+    "linked": true
+   },
+   {
+    "slug": "keren-li",
+    "name": "keren-li (30)",
     "linked": true
    },
    {
     "slug": "nguyen-duc-phuc",
-    "name": "nguyen-duc-phuc (5)",
+    "name": "nguyen-duc-phuc (3)",
+    "linked": true
+   },
+   {
+    "slug": "junya-shiraishi",
+    "name": "junya-shiraishi (2)",
+    "linked": true
+   },
+   {
+    "slug": "masafumi-moriyama",
+    "name": "masafumi-moriyama (4)",
     "linked": true
    }
   ]
  },
  {
   "group": "info",
-  "title": "People with no Scholar profile figure",
-  "detail": "Papers come from Researchmap, ORCID or OpenAlex; citation counts are OpenAlex's, which index fewer papers than Scholar, so their totals are not comparable with Scholar totals.",
+  "title": "Papers confirmed by the person's own page (unofficial)",
+  "detail": "They are listed in self_reported.csv and counted with no citation figure, until a record appears in OpenAlex.",
   "action": "",
   "severity": "todo",
+  "rows": [],
   "who": [
    {
-    "slug": "huan-bang-li",
-    "name": "Huan-Bang Li (researchmap)",
-    "linked": true
-   },
-   {
-    "slug": "takeshi-matsumura",
-    "name": "Takeshi Matsumura (openalex)",
-    "linked": true
-   },
-   {
-    "slug": "hirokazu-sawada",
-    "name": "Hirokazu Sawada (openalex)",
-    "linked": true
-   },
-   {
-    "slug": "nguyen-duc-phuc",
-    "name": "Nguyen Duc Phuc (orcid)",
-    "linked": true
-   },
-   {
-    "slug": "keren-li",
-    "name": "Keren Li (researchmap)",
+    "slug": "thanh-le",
+    "name": "Thanh Le",
     "linked": true
    }
   ]
+ },
+ {
+  "group": "info",
+  "title": "What the figures are",
+  "detail": "Source: OpenAlex only. A paper counts for a person when OpenAlex prints the person's name on it together with an NICT affiliation; its citations are OpenAlex's. OpenAlex indexes fewer papers than Google Scholar, so totals are lower than Scholar's. There is no claimed-versus-counted comparison, as no profile totals are used. Google Scholar, Researchmap and ORCID data are kept in the snapshot but not used.",
+  "action": "",
+  "severity": "todo",
+  "rows": [],
+  "who": []
  }
 ]

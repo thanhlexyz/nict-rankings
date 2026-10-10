@@ -1,0 +1,21 @@
+{{ define "main" -}}
+{{- $o := hugo.Data.overview }}{{- $ch := hugo.Data.charts }}
+<h1>Citations per year</h1>
+<p class="lede">Citations each person received in each year, <strong>from Google Scholar, counting only the articles that are really theirs</strong>
+(author list names the person, in their field; see About). Where a person's profile has not been read yet the card shows OpenAlex's per-year counts
+instead and says so. The year in progress (marked *) is partial. Strong bars: {{ $o.from_year }} onwards. Each chart has its own scale.</p>
+{{ with $ch.years_group }}
+<h2>Whole group (Scholar-validated, {{ $o.scholar_years_people }} of {{ $o.people }} people so far)</h2>
+<figure>{{ . | safeHTML }}</figure>
+{{ else }}<p class="note">No Scholar-validated year series yet: they appear as profiles are read.</p>{{ end }}
+<h2>Per person</h2>
+<div class="grid">
+{{- range sort hugo.Data.people "received_since" "desc" }}
+{{- $chart := index $ch.years_people .slug }}
+<figure class="card">
+  <figcaption><a href="{{ printf "people/%s/" .slug | relURL }}">{{ .name }}</a> <span class="muted">{{ if eq (index $ch.years_source .slug) "scholar" }}Scholar-validated{{ else }}OpenAlex (Scholar not read yet){{ end }}</span></figcaption>
+  {{ if $chart }}{{ $chart | safeHTML }}{{ else }}<p class="note">No yearly data.</p>{{ end }}
+</figure>
+{{- end }}
+</div>
+{{- end }}

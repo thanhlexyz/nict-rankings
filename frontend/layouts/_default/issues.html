@@ -28,6 +28,7 @@
     {{- range . }}<li>{{ if .linked }}<a href="{{ printf "people/%s/" .slug | relURL }}">{{ .name }}</a>{{ else }}{{ .name }}{{ end }}</li>{{ end }}
   </ul>
   {{- end }}
+  {{- with .rows }}<details><summary>Details ({{ len . }})</summary><ul class="rows">{{ range . }}<li>{{ . }}</li>{{ end }}</ul></details>{{ end }}
   {{- with .action }}<p class="action"><strong>Next:</strong> {{ . }}</p>{{ end }}
 </article>
 {{- end }}

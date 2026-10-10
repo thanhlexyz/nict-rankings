@@ -12,6 +12,7 @@ the IDs are hand-kept in roster.csv. This is a manual snapshot: `make data` neve
 import argparse
 import csv
 import html
+import os
 import re
 import subprocess
 import sys
@@ -26,10 +27,17 @@ DETAIL_DELAY = 6.0
 
 
 def get(url, tries=2):
-    """curl, not python-requests: Google answers a Python client with 429 where curl is served."""
+    """curl, not python-requests: Google answers a Python client with 429 where curl is served.
+
+    With SCHOLAR_VIA_SSH=<host> the same curl runs on that host (an ssh alias), which has its own address.
+    """
+    cmd = ["curl", "-sL", "--max-time", "40", "-A", UA, "-w", "\n%{http_code} %{url_effective}", url]
+    via = os.environ.get("SCHOLAR_VIA_SSH", "").strip()
+    if via:
+        import shlex
+        cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15", via, " ".join(shlex.quote(c) for c in cmd)]
     for i in range(tries):
-        out = subprocess.run(["curl", "-sL", "--max-time", "40", "-A", UA, "-w", "\n%{http_code} %{url_effective}", url],
-                             capture_output=True).stdout.decode("utf-8", "ignore")
+        out = subprocess.run(cmd, capture_output=True).stdout.decode("utf-8", "ignore")
         body, _, tail = out.rpartition("\n")
         code, _, final = tail.partition(" ")
         if code == "200" and "accounts.google.com" not in final and "/sorry/" not in final:

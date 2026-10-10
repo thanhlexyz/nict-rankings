@@ -1,0 +1,29 @@
+[
+ {
+  "key": "oaW7126019609",
+  "title": "Experimental Evaluation of an OFDM THz Communication System with LDPC and Turbo Codes",
+  "year": 2025,
+  "cites": 0,
+  "venue": "International Symposium on Wireless Personal Multimedia Communications (WPMC)",
+  "authors": "Kazuya Takashima, Masafumi Moriyama, Hirokazu Sawada, Takeshi Matsumura",
+  "kind": "journal",
+  "quartile": "",
+  "core_rank": "",
+  "venue_matched": "International Symposium on Wireless Personal Multimedia Communications, WPMC",
+  "venue_how": "SJR",
+  "venue_edition": "",
+  "venue_key": "journal_other",
+  "class_rank": 1,
+  "class_label": "Journal, not in SCImago",
+  "class_color": "n",
+  "status": "verified",
+  "status_text": "verified by OpenAlex",
+  "reason": "OpenAlex prints the person with an NICT affiliation on this paper.",
+  "counted": true,
+  "unofficial": false,
+  "oa": [
+   "W7126019609"
+  ],
+  "url": "https://scholar.google.com/citations?view_op=view_citation&user=&citation_for_view=oaW7126019609"
+ }
+]

@@ -5,6 +5,7 @@ Statuses (the About page states the same rules):
   listed       no such record, but the author list Scholar prints for the paper names the person
   unconfirmed  no independent record and Scholar prints a cut author list that does not show the person
   not_listed   the paper's author list (OpenAlex record, or Scholar's complete list) does not name the person
+  self_reported the person's own page (self_reported.csv) lists the paper: counted, tagged unofficial
   outside      published outside the person's period at NICT (roster period_from / period_to); not counted
   maintainer   paper_overrides.csv says `yes` (counted) - or `no` (not_listed, reason from the note)
 Counted ("confirmed") citations are verified + listed + maintainer-yes. Unconfirmed ones are shown, not counted.
@@ -70,4 +71,4 @@ def paper_status(paper, person, records, override=None, source="scholar"):
     return "unconfirmed", f"{src} author list is cut and no independent record was found."
 
 
-COUNTED = {"verified", "listed", "maintainer"}
+COUNTED = {"verified", "listed", "maintainer", "self_reported"}

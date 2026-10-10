@@ -1,0 +1,56 @@
+{{ define "main" -}}
+{{- $c := hugo.Data.cooperation }}
+<h1>Researcher cooperation</h1>
+<p class="lede">Who the tracked researchers write papers with, from the author lists of their OpenAlex papers. A paper counts once however many
+tracked researchers are on it; papers with more than {{ $c.max_authors }} authors (consortium papers) are left out.</p>
+
+<section class="tiles">
+  <div class="tile"><span class="big">{{ $c.works }}</span><span>papers with a co-author list, by {{ $c.tracked }} tracked researchers</span></div>
+  <div class="tile"><span class="big">{{ $c.internal_pairs }}</span><span>pairs of tracked researchers who share papers</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $c.ext_total }}</span><span>distinct co-authors beyond the tracked list ({{ $c.ext_repeat }} with two papers or more, {{ $c.ext_nict }} at NICT)</span></div>
+  <div class="tile"><span class="big">{{ len $c.countries }}+</span><span>countries among the co-authors' institutions</span></div>
+</section>
+
+<h2>Among the tracked researchers</h2>
+{{ with $c.internal_svg }}
+<p class="note">A circle is a researcher (larger: more papers); a line joins two who share papers, thicker and closer with more of them. Hover a name to
+highlight their lines; the number on a line is the shared papers.</p>
+<figure class="graph">{{ . | safeHTML }}</figure>
+{{ with $c.isolated }}<p class="note">No shared paper with another tracked researcher: {{ range $i, $p := . }}{{ if $i }}, {{ end }}<a href="{{ printf "people/%s/" $p.slug | relURL }}">{{ $p.name }}</a>{{ end }}.</p>{{ end }}
+{{ else }}<p class="note">Fewer than two tracked researchers share a paper.</p>{{ end }}
+
+{{ with $c.pairs }}
+<div class="tablewrap"><table class="kv">
+<thead><tr><th class="l">Pair</th><th>Shared papers</th></tr></thead>
+<tbody>{{ range . }}<tr><th class="l">{{ .a_name }} – {{ .b_name }}</th><td>{{ .papers }}</td></tr>{{ end }}</tbody></table></div>
+{{ end }}
+
+<h2>Outside co-authors</h2>
+<p class="note">The tracked researchers on the left, their most frequent co-authors on the right (two papers or more); a line for each pair that shares papers.
+Blue circles on the right are colleagues at NICT who are not on the tracked list; orange ones are outside NICT.</p>
+<figure class="graph">{{ $c.external_svg | safeHTML }}</figure>
+
+<h2>Most frequent co-authors</h2>
+<div class="tablewrap"><table class="sortable papers" id="coauthors">
+<thead><tr><th class="pin">#</th><th class="l" data-type="text">Co-author</th><th class="l" data-type="text">Institution</th><th class="l" data-type="text">Country</th><th>Papers</th><th>With</th><th>First</th><th>Last</th></tr></thead>
+<tbody>
+{{- range $c.coauthors }}
+<tr><td class="pin rk"></td><td class="l" data-v="{{ .name }}">{{ .name }}</td><td class="l" data-v="{{ .inst }}">{{ if .nict }}<span class="chip c0">NICT</span> {{ else }}<span class="chip h1">outside</span> {{ end }}{{ .inst }}</td><td class="l" data-v="{{ .country }}">{{ .country }}</td>
+<td data-v="{{ .papers }}"><strong>{{ .papers }}</strong></td><td data-v="{{ len .with }}" class="l">{{ range $i, $w := .with }}{{ if $i }}, {{ end }}<a href="{{ printf "people/%s/" $w.slug | relURL }}">{{ $w.name }}</a> <span class="muted">{{ $w.papers }}</span>{{ end }}</td>
+<td data-v="{{ .first }}">{{ .first }}</td><td data-v="{{ .last }}">{{ .last }}</td></tr>
+{{- end }}
+</tbody></table></div>
+
+<div class="twocol">
+<div><h2>Partner institutions</h2>
+<table class="kv"><thead><tr><th class="l">Institution</th><th>Papers</th><th>Co-authors</th></tr></thead><tbody>
+{{- range $c.institutions }}<tr><th class="l">{{ .name }}</th><td>{{ .papers }}</td><td>{{ .coauthors }}</td></tr>{{ end }}
+</tbody></table></div>
+<div><h2>Countries</h2>
+<table class="kv"><thead><tr><th class="l">Country</th><th>Papers</th><th>Co-authors</th></tr></thead><tbody>
+{{- range $c.countries }}<tr><th class="l">{{ .name }}</th><td>{{ .papers }}</td><td>{{ .coauthors }}</td></tr>{{ end }}
+</tbody></table></div>
+</div>
+<p class="note">A co-author's institution and country are the first affiliation OpenAlex prints for them on the paper, most frequent over their papers. A person
+OpenAlex has split over several profiles counts as several co-authors.</p>
+{{- end }}

@@ -1,32 +1,35 @@
 {{ define "main" -}}
 {{- $o := hugo.Data.overview }}
 {{- $people := hugo.Data.people }}
-<h1>Whose citations are really theirs?</h1>
-<p class="lede">Citation counts on Google Scholar profiles of NICT researchers, counted again for the papers that
-actually name the researcher as an author. Journal papers are grouped by SCImago quartile and conference papers by CORE rank.</p>
+<h1>Citations of NICT researchers</h1>
+<p class="lede">Each researcher's citations twice: <strong>Scholar cleaned</strong> (Google Scholar articles whose author list names the person) where the profile has been read,
+and <strong>OpenAlex</strong> (the papers OpenAlex attributes to them) for everyone.
+Journal papers are grouped by SCImago quartile and conference papers by the CORE rank at the time of the paper.</p>
 
 <section class="tiles" aria-label="Totals">
-  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.claimed }}</span><span>claimed on {{ $o.claimed_people }} Scholar profiles</span></div>
-  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.counted }}</span><span>counted on those profiles: papers that name the person</span></div>
-  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.removed }}</span><span>in {{ $o.papers_removed }} papers whose author list does not</span></div>
-  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.unconfirmed }}</span><span>unconfirmed, in {{ $o.papers_unconfirmed }} papers</span></div>
+  <div class="tile"><span class="big">{{ lang.FormatNumber 0 $o.main_citations }}</span><span>citations of {{ $o.people }} people (Scholar cleaned for {{ $o.main_scholar_people }}, OpenAlex for the rest)</span></div>
+  <div class="tile"><span class="big">{{ $o.top_papers }}</span><span>real papers (Conf. A* or Journal Q1), {{ $o.top_papers_since }} since {{ $o.from_year }}</span></div>
+  <div class="tile"><span class="big">{{ sub $o.papers $o.top_papers }}</span><span>papers for fun (every other rank)</span></div>
 </section>
 
 <div class="tabs" role="tablist">
   <button role="tab" aria-selected="true" data-tab="all">All years</button>
   <button role="tab" aria-selected="false" data-tab="since">Since {{ $o.from_year }} (last five years)</button>
 </div>
-{{ if $o.other_people }}<p class="note">{{ $o.other_people }} further people have no Scholar profile: {{ lang.FormatNumber 0 $o.counted_other }} citations counted from Researchmap / ORCID / OpenAlex records, shown in the table with no "claimed" figure.</p>{{ end }}
-<p class="note">Click a column to sort. Cups mark the best three values of the sorted column. Hover a header for its definition.</p>
+<p class="note">Sorted by citations: Scholar cleaned (Google Scholar articles whose author list names the person), and OpenAlex's figure for people without a Scholar profile (tagged); click a column to sort. Cups mark the best three values of the sorted column. Hover a header for its definition.
+<strong>Score</strong> is the final score: citations per submission (citations divided by papers). <strong>Real : fun</strong> is the ratio of real papers to papers for fun; <strong>Real papers</strong> are Conf. A* and Journal Q1; <strong>papers for fun</strong> are all the others. The full breakdown by rank is on each person's page and on Analysis.</p>
 <div class="pane" data-pane="all">{{ partial "ranking-table.html" (dict "people" $people "window" "all" "from" $o.from_year) }}</div>
 <div class="pane" data-pane="since" hidden>{{ partial "ranking-table.html" (dict "people" $people "window" "since" "from" $o.from_year) }}</div>
 
+<p class="note">* Not completely fetched from OpenAlex: the person's OpenAlex author IDs are provisional, so the figures may include a namesake's
+papers or miss some. They are confirmed by an ORCID, a cross-check against the person's own profile, or the maintainer.</p>
 {{ with $o.waiting }}
-<details class="waiting"><summary>{{ len . }} people on the screening list are waiting for a profile or a snapshot</summary>
-<ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul></details>
+<details class="waiting"><summary>{{ len . }} people on the list have no OpenAlex author ID yet</summary>
+<ul>{{ range . }}<li>{{ . }} <sup class="star">*</sup></li>{{ end }}</ul></details>
 {{ end }}
 
-<h2>Claimed against counted</h2>
+<h2>Citations per person</h2>
+<p class="note">Sorted by citations received since {{ $o.from_year }}.</p>
 {{ hugo.Data.charts.citations_legend | safeHTML }}
 <figure>{{ hugo.Data.charts.citations | safeHTML }}</figure>
 {{- end }}

@@ -1,0 +1,12 @@
+{{- /* .rows: slice of dict "label" "v" (a venues map). Columns follow the class order: A* > Q1 > A > Q2 > B > rest. */ -}}
+{{- $cols := slice
+  (dict "k" "conf_astar" "t" "Conf. A*" "c" "h0") (dict "k" "journal_q1" "t" "Journal Q1" "c" "c0") (dict "k" "conf_a" "t" "Conf. A" "c" "h1")
+  (dict "k" "journal_q2" "t" "Journal Q2" "c" "c1") (dict "k" "conf_b" "t" "Conf. B" "c" "h2") (dict "k" "journal_q3" "t" "Q3" "c" "c2") (dict "k" "journal_q4" "t" "Q4" "c" "c3")
+  (dict "k" "conf_c" "t" "Conf. C" "c" "h3") (dict "k" "conf_unranked" "t" "Conf. unranked" "c" "n") (dict "k" "journal_other" "t" "Journal, not in SCImago" "c" "n")
+  (dict "k" "preprint" "t" "Preprint" "c" "n") (dict "k" "patent" "t" "Patent" "c" "n") (dict "k" "other" "t" "Other" "c" "n") }}
+<div class="tablewrap"><table class="kv venues">
+<tr><th></th>{{ range $cols }}<th class="vc {{ .c }}">{{ .t }}</th>{{ end }}</tr>
+{{- range .rows }}{{ $v := .v }}
+<tr><th class="l">{{ .label }}</th>{{ range $cols }}<td class="vc {{ .c }}">{{ index $v .k }}</td>{{ end }}</tr>
+{{- end }}
+</table></div>

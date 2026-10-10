@@ -1,5 +1,5 @@
 baseURL = '/'
-languageCode = 'en-us'
+locale = 'en-us'
 title = 'NICT citations, checked'
 disableKinds = ['taxonomy', 'term', 'rss']
 enableRobotsTXT = true
@@ -19,14 +19,18 @@ enableRobotsTXT = true
     pageRef = '/analysis/'
     weight = 2
   [[menus.main]]
-    name = 'Monthly'
-    pageRef = '/monthly/'
+    name = 'Cooperation'
+    pageRef = '/cooperation/'
     weight = 3
+  [[menus.main]]
+    name = 'Yearly'
+    pageRef = '/yearly/'
+    weight = 4
   [[menus.main]]
     name = 'Open issues'
     pageRef = '/issues/'
-    weight = 4
+    weight = 5
   [[menus.main]]
     name = 'About'
     pageRef = '/about/'
-    weight = 5
+    weight = 6

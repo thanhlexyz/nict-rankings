@@ -11,33 +11,45 @@
     try { localStorage.setItem("theme", next); } catch (e) {}
   });
 
-  // cups: the top three distinct values of the sorted numeric column; zero gets none; cells marked data-last none.
+  // cups for the top three distinct values of the sorted numeric column, shown in the # column like the template:
+  // gold, silver, bronze; ties share a cup and the next value takes the next one; a zero gets none when sorted largest first;
+  // sorted by text there are none; cells marked data-last never get one.
+  var CUP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V18h3v2H8v-2h3v-3.1A5 5 0 0 1 8.3 12H8a4 4 0 0 1-4-4V5h3V3zm0 4H6v1a2 2 0 0 0 1 1.7V7zm10 0v2.7A2 2 0 0 0 18 8V7h-1z"/></svg>';
+  function slotOf(row) {
+    var rk = row.querySelector(".rk");
+    if (rk && !rk.querySelector(".n")) rk.innerHTML = '<span class="cup"></span><span class="n"></span>';
+    return rk;
+  }
   function cups(table, col, asc) {
-    table.querySelectorAll(".cup").forEach(function (c) { c.remove(); });
+    Array.prototype.forEach.call(table.tBodies[0].rows, function (r) {
+      var rk = slotOf(r);
+      if (rk) { var c = rk.querySelector(".cup"); c.className = "cup"; c.innerHTML = ""; c.removeAttribute("title"); }
+    });
     if (col < 0) return;
     var rows = Array.prototype.slice.call(table.tBodies[0].rows).filter(function (r) { return r.style.display !== "none"; });
-    var cells = rows.map(function (r) { return r.cells[col]; });
-    if (!cells.length || cells[0].classList.contains("l")) return;
+    if (!rows.length || rows[0].cells[col].classList.contains("l")) return;
     var vals = [];
-    cells.forEach(function (c) { if (!c.hasAttribute("data-last")) vals.push(parseFloat(c.dataset.v)); });
+    rows.forEach(function (r) { var c = r.cells[col]; if (!c.hasAttribute("data-last")) vals.push(parseFloat(c.dataset.v)); });
     vals = vals.filter(function (v) { return !isNaN(v) && (asc ? true : v > 0); });
     var distinct = Array.from(new Set(vals)).sort(function (a, b) { return asc ? a - b : b - a; }).slice(0, 3);
-    var cls = ["g", "s", "b"];
-    cells.forEach(function (c) {
+    var kinds = ["gold", "silver", "bronze"];
+    rows.forEach(function (r) {
+      var c = r.cells[col];
       if (c.hasAttribute("data-last")) return;
       var i = distinct.indexOf(parseFloat(c.dataset.v));
-      if (i < 0) return;
-      var s = document.createElement("span");
-      s.className = "cup " + cls[i];
-      s.title = ["gold", "silver", "bronze"][i];
-      c.insertBefore(s, c.firstChild);
+      var rk = r.querySelector(".rk");
+      if (i < 0 || !rk) return;
+      var s = rk.querySelector(".cup");
+      s.className = "cup " + kinds[i];
+      s.innerHTML = CUP;
+      s.title = kinds[i];
     });
   }
   function renumber(table) {
     var n = 0;
     Array.prototype.forEach.call(table.tBodies[0].rows, function (r) {
-      var rk = r.querySelector(".rk");
-      if (rk && r.style.display !== "none") rk.textContent = ++n;
+      var rk = slotOf(r);
+      if (rk && r.style.display !== "none") rk.querySelector(".n").textContent = ++n;
     });
   }
   function sortBy(table, col, asc, text) {
@@ -64,7 +76,7 @@
       var title = th.getAttribute("data-title");
       if (title) th.title = title;
       th.addEventListener("click", function () {
-        var text = th.dataset.type === "text" || th.classList.contains("l");
+        var text = th.dataset.type === "text" || (th.classList.contains("l") && th.dataset.type !== "num");
         var asc = state.col === i ? !state.asc : text;
         state = { col: i, asc: asc };
         sortBy(table, i, asc, text);
@@ -72,8 +84,29 @@
     });
     // default: the first numeric column that is a citation count, largest first
     var rank = table.id && table.id.indexOf("rank-") === 0;
-    if (rank) { var d = table.querySelector("thead th:nth-child(4)"); if (d) { state = { col: 3, asc: false }; sortBy(table, 3, false, false); } }
+    // citations (the ranking's third column), largest first
+    if (rank) { state = { col: 2, asc: false }; sortBy(table, 2, false, false); }
     else renumber(table);
+  });
+
+  // network graphs: hovering a node lights its lines and neighbours
+  document.querySelectorAll("svg.net").forEach(function (svg) {
+    svg.querySelectorAll(".node").forEach(function (n) {
+      n.addEventListener("mouseenter", function () {
+        var id = n.getAttribute("data-id"), near = {};
+        svg.classList.add("focus");
+        svg.querySelectorAll(".edge, .ew").forEach(function (e) {
+          var on = e.getAttribute("data-a") === id || e.getAttribute("data-b") === id;
+          e.classList.toggle("on", on);
+          if (on) { near[e.getAttribute("data-a")] = 1; near[e.getAttribute("data-b")] = 1; }
+        });
+        svg.querySelectorAll(".node").forEach(function (m) { m.classList.toggle("on", !!near[m.getAttribute("data-id")]); });
+      });
+      n.addEventListener("mouseleave", function () {
+        svg.classList.remove("focus");
+        svg.querySelectorAll(".on").forEach(function (e) { e.classList.remove("on"); });
+      });
+    });
   });
 
   // tabs on the ranking page

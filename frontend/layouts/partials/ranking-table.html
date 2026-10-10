@@ -1,4 +1,4 @@
-{{- /* .window = "all" | "since"; people from data/people.json */ -}}
+{{- /* .window = "all" | "since". Real papers: Conf. A* and Journal Q1. Papers for fun: every other counted paper. */ -}}
 {{- $w := .window }}
 <div class="tablewrap">
 <table class="rank sortable" id="rank-{{ $w }}">
@@ -7,56 +7,45 @@
   <th class="pin">#</th>
   <th class="l" data-type="text" aria-sort="none">Name</th>
   {{- if eq $w "all" }}
-  <th data-title="Citations on the Google Scholar profile">Claimed</th>
-  <th data-title="Citations of papers that name the person as an author">Counted</th>
-  <th data-title="Counted / claimed">Share</th>
-  <th data-title="Citations of papers whose author list does not name the person">Not listed</th>
-  <th data-title="Citations of papers that could not be checked (cut author list)">Unconfirmed</th>
-  <th data-title="h-index of the counted papers (Scholar's own in brackets on the person page)">h</th>
-  <th data-title="Counted papers">Papers</th>
+  <th data-title="Scholar citations of the articles whose author list names the person (the share of the profile's total in brackets). Where there is no Google Scholar profile, OpenAlex's figure stands in (tagged).">Citations</th>
+  <th data-title="Final score: citations per submission = the citations in the column on the left divided by the person's number of papers (Scholar's articles that are really theirs; OpenAlex's papers where there is no Scholar profile)">Score</th>
+  <th class="vc h0" data-title="Papers in a Conf. A* or a Journal Q1: the ones that count">Real papers</th>
+  <th class="vc n" data-title="All the other counted papers: any other rank, unranked venues, preprints, patents">Papers for fun</th>
+  <th data-title="Real papers per paper for fun (real / for fun). All real, no paper for fun: shown as ∞">Real : fun</th>
   {{- else }}
-  <th data-title="Citations received since {{ .from }} according to the Scholar profile (all papers)">Claimed since {{ .from }}</th>
-  <th data-title="Citations of counted papers published since {{ .from }}">Counted, papers since {{ .from }}</th>
-  <th data-title="Counted papers published since {{ .from }}">Papers</th>
-  <th data-title="h-index of counted papers published since {{ .from }}">h</th>
+  <th data-title="Citations received since {{ .from }} by the person's real articles (Scholar per-year bars once read; OpenAlex's per-year counts until then, tagged)">Citations since {{ .from }}</th>
+  <th data-title="Citations of the papers published since {{ .from }} divided by their number (OpenAlex)">Score</th>
+  <th class="vc h0" data-title="Papers published since {{ .from }} in a Conf. A* or a Journal Q1">Real papers</th>
+  <th class="vc n" data-title="All the other counted papers published since {{ .from }}">Papers for fun</th>
+  <th data-title="Real papers per paper for fun (real / for fun), papers published since {{ .from }}">Real : fun</th>
   {{- end }}
-  <th data-title="Journal papers in a Q1 SCImago quartile">Q1 journal</th>
-  <th data-title="Journal papers, Q2 to Q4">Q2–Q4</th>
-  <th data-title="CORE rank A*">A*</th>
-  <th data-title="CORE rank A">A</th>
-  <th data-title="CORE rank B">B</th>
-  <th data-title="CORE rank C">C</th>
-  <th data-title="Conference papers not in the CORE list">Unranked conf.</th>
 </tr>
 </thead>
 <tbody>
 {{- range $i, $p := .people }}
 {{- $v := cond (eq $w "all") $p.venues $p.venues_since }}
+{{- $real := add $v.conf_astar $v.journal_q1 }}
+{{- $all := cond (eq $w "all") $p.counted.papers $p.since_window.papers }}
 <tr>
   <td class="pin rk"></td>
-  <td class="l" data-v="{{ $p.name }}"><a href="{{ printf "people/%s/" $p.slug | relURL }}">{{ $p.name }}</a>{{ with $p.name_ja }} <span class="ja">{{ . }}</span>{{ end }}</td>
+  <td class="l" data-v="{{ $p.name }}"><a href="{{ printf "people/%s/" $p.slug | relURL }}">{{ $p.name }}</a>{{ if $p.incomplete }}<sup class="star" title="{{ $p.incomplete_reason }}">*</sup>{{ end }}{{ with $p.name_ja }} <span class="ja">{{ . }}</span>{{ end }}</td>
   {{- if eq $w "all" }}
-  {{ if $p.has_claim }}<td data-v="{{ $p.claimed.citations }}">{{ lang.FormatNumber 0 $p.claimed.citations }}</td>{{ else }}<td data-last="1" data-v="-1" class="muted" title="No Google Scholar profile: papers from {{ $p.source }}">–</td>{{ end }}
-  <td data-v="{{ $p.counted.citations }}"><strong>{{ lang.FormatNumber 0 $p.counted.citations }}</strong></td>
-  {{- with $p.ratio }}<td data-v="{{ . }}">{{ mul . 100 | lang.FormatNumber 1 }}%</td>{{ else }}<td data-last="1" data-v="-1" class="muted">–</td>{{ end }}
-  <td data-v="{{ $p.removed.citations }}">{{ if $p.removed.citations }}{{ lang.FormatNumber 0 $p.removed.citations }} <span class="muted">({{ $p.removed.papers }})</span>{{ else }}0{{ end }}</td>
-  <td data-v="{{ $p.unconfirmed.citations }}">{{ if $p.unconfirmed.papers }}{{ lang.FormatNumber 0 $p.unconfirmed.citations }} <span class="muted">({{ $p.unconfirmed.papers }})</span>{{ else }}0{{ end }}</td>
-  <td data-v="{{ $p.counted.h }}">{{ $p.counted.h }}</td>
-  <td data-v="{{ $p.counted.papers }}">{{ $p.counted.papers }}</td>
+  <td data-v="{{ $p.main.citations }}"><strong>{{ lang.FormatNumber 0 $p.main.citations }}</strong>
+    {{- if eq $p.main.source "scholar" }}{{ with $p.scholar }}{{ if lt .cleaned .claimed }} <span class="muted">({{ mul (div (float .cleaned) (float .claimed)) 100 | lang.FormatNumber 0 }}%)</span>{{ end }}{{ end }}
+    {{- else }} <span class="chip n" title="No Google Scholar profile read: OpenAlex's figure stands in">OpenAlex</span>{{ end }}</td>
+  <td data-v="{{ $p.main.score }}"><strong>{{ lang.FormatNumber 1 $p.main.score }}</strong></td>
+  <td class="vc h0" data-v="{{ $real }}"><strong>{{ $real }}</strong></td>
+  <td class="vc n" data-v="{{ sub $all $real }}">{{ sub $all $real }}</td>
+  {{- $fun := sub $all $real }}
+  <td data-v="{{ if $fun }}{{ div (float $real) (float $fun) }}{{ else if $real }}9999{{ else }}0{{ end }}">{{ if $fun }}{{ lang.FormatNumber 2 (div (float $real) (float $fun)) }}{{ else if $real }}∞{{ else }}0{{ end }}</td>
   {{- else }}
-  {{ if $p.has_claim }}<td data-v="{{ $p.claimed.since }}">{{ lang.FormatNumber 0 $p.claimed.since }}</td>{{ else }}<td data-last="1" data-v="-1" class="muted">–</td>{{ end }}
-  <td data-v="{{ $p.since_window.citations }}"><strong>{{ lang.FormatNumber 0 $p.since_window.citations }}</strong></td>
-  <td data-v="{{ $p.since_window.papers }}">{{ $p.since_window.papers }}</td>
-  <td data-v="{{ $p.since_window.h }}">{{ $p.since_window.h }}</td>
+  <td data-v="{{ $p.main.since }}"><strong>{{ lang.FormatNumber 0 $p.main.since }}</strong>{{ if eq $p.main.since_source "openalex" }} <span class="chip n" title="{{ if $p.scholar }}Scholar's per-year bars of this person are not read yet{{ else }}No Google Scholar profile read{{ end }}: OpenAlex's figure stands in">OpenAlex</span>{{ end }}</td>
+  <td data-v="{{ $p.main.score_since }}"><strong>{{ lang.FormatNumber 1 $p.main.score_since }}</strong></td>
+  <td class="vc h0" data-v="{{ $real }}"><strong>{{ $real }}</strong></td>
+  <td class="vc n" data-v="{{ sub $all $real }}">{{ sub $all $real }}</td>
+  {{- $fun := sub $all $real }}
+  <td data-v="{{ if $fun }}{{ div (float $real) (float $fun) }}{{ else if $real }}9999{{ else }}0{{ end }}">{{ if $fun }}{{ lang.FormatNumber 2 (div (float $real) (float $fun)) }}{{ else if $real }}∞{{ else }}0{{ end }}</td>
   {{- end }}
-  <td data-v="{{ $v.journal_q1 }}">{{ $v.journal_q1 }}</td>
-  {{- $q := add (add $v.journal_q2 $v.journal_q3) $v.journal_q4 }}
-  <td data-v="{{ $q }}">{{ $q }}</td>
-  <td data-v="{{ $v.conf_astar }}">{{ $v.conf_astar }}</td>
-  <td data-v="{{ $v.conf_a }}">{{ $v.conf_a }}</td>
-  <td data-v="{{ $v.conf_b }}">{{ $v.conf_b }}</td>
-  <td data-v="{{ $v.conf_c }}">{{ $v.conf_c }}</td>
-  <td data-v="{{ $v.conf_unranked }}">{{ $v.conf_unranked }}</td>
 </tr>
 {{- end }}
 </tbody>

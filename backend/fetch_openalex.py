@@ -11,6 +11,7 @@ names are heavily conflated in OpenAlex. Everything downloaded goes to raw/opena
 import argparse
 import csv
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -57,8 +58,8 @@ def slim(w):
         "id": w["id"].rsplit("/", 1)[-1], "doi": w.get("doi"), "title": w.get("title") or "",
         "year": w.get("publication_year"), "type": w.get("type"), "cited_by": w.get("cited_by_count", 0),
         "source": src.get("display_name"), "source_type": src.get("type"), "issn": src.get("issn") or [],
-        "authors": [{"id": (a.get("author") or {}).get("id", "").rsplit("/", 1)[-1],
-                     "name": (a.get("author") or {}).get("display_name", ""), "raw": a.get("raw_author_name", "")}
+        "authors": [{"id": ((a.get("author") or {}).get("id") or "").rsplit("/", 1)[-1],
+                     "name": (a.get("author") or {}).get("display_name") or "", "raw": a.get("raw_author_name") or ""}
                     for a in w.get("authorships", [])],
     }
 
@@ -73,10 +74,11 @@ def resolve(people):
         if p.get("orcid"):  # an ORCID names exactly one OpenAlex author
             r = api("authors", filter="orcid:https://orcid.org/" + p["orcid"]).get("results", [])
             if len(r) == 1:
+                aid = r[0]["id"].rsplit("/", 1)[-1]
                 for row in roster:
                     if row["slug"] == p["slug"]:
-                        row["openalex_ids"] = r[0]["id"].rsplit("/", 1)[-1]
-                print(f"  {p['slug']}: {row['openalex_ids']} by ORCID", file=sys.stderr)
+                        row["openalex_ids"] = aid
+                print(f"  {p['slug']}: {aid} by ORCID", file=sys.stderr)
                 continue
         for name in p["names"]:
             if not name.isascii():
@@ -93,13 +95,7 @@ def resolve(people):
                           "institutions": "; ".join(i["institution"]["display_name"] for i in a.get("affiliations", [])[:4] if i.get("institution"))})
         out += cands
         good = [c for c in cands if c["nict"] and c["name_fits"]]
-        if len(good) == 1:
-            for r in roster:
-                if r["slug"] == p["slug"]:
-                    r["openalex_ids"] = good[0]["openalex_id"]
-            print(f"  {p['slug']}: {good[0]['openalex_id']} ({good[0]['works']} works)", file=sys.stderr)
-        else:
-            print(f"  {p['slug']}: {len(good)} NICT candidates ({len(cands)} total): confirm by hand", file=sys.stderr)
+        print(f"  {p['slug']}: {len(good)} NICT candidate(s) of {len(cands)}: see work/openalex_candidates.csv (provisional until confirmed)", file=sys.stderr)
     WORK.mkdir(exist_ok=True)
     with (WORK / "openalex_candidates.csv").open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, ["slug", "name", "openalex_id", "display_name", "works", "cited_by", "nict", "name_fits", "institutions"])
@@ -128,8 +124,12 @@ def lookup_titles(slug, papers, known, cache):
         k = title_key(p["title"])
         if len(k) < 12 or k in known or k in cache["titles"]:
             continue
-        r = api("works", filter="title.search:" + p["title"].replace(",", " ").replace(":", " ")[:200], select=WORKS_SELECT,
-                **{"per-page": 5})
+        try:
+            r = api("works", filter="title.search:" + re.sub(r"[,:|()\[\]\"'?*<>]", " ", p["title"])[:200], select=WORKS_SELECT,
+                    **{"per-page": 5})
+        except urllib.error.HTTPError as e:  # one odd title must not stop the run; not cached, so it is retried next time
+            print(f"  skipped a title lookup (HTTP {e.code}): {p['title'][:60]!r}", file=sys.stderr)
+            continue
         hits = [slim(w) for w in r.get("results", []) if title_key(w.get("title") or "") == k]
         cache["titles"][k] = hits
         n += 1
